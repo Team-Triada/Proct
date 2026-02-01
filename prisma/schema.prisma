@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid()) @db.VarChar(30)
+  email        String        @unique @db.VarChar(255)
+  password     String        @db.VarChar(255)
+  name         String        @db.VarChar(255)
+  rollNumber   String?       @unique @db.VarChar(50)
+  role         String        @default("STUDENT") @db.VarChar(20) // ADMIN, FACULTY, STUDENT
+  department   String?       @db.VarChar(100)
+  semester     Int?          // For students: 1-8
+  batch        String?       @db.VarChar(20) // Year e.g. \"2024-27\"\n  section      String?       @db.VarChar(10) // Batch number e.g. \"1\", \"2\" (displayed as \"Batch 1\")
+  campusId     String?       @db.VarChar(50) // e.g. "BLR-123"
+  image        String?       @db.Text // URL
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  subjects     Subject[]     @relation("FacultySubjects")
+  quizzes      Quiz[]        @relation("FacultyQuizzes")
+  attempts     QuizAttempt[]
+}
+
+model Subject {
+  id          String   @id @default(cuid()) @db.VarChar(30)
+  code        String   @unique @db.VarChar(20)   // e.g., "CS101"
+  name        String   @db.VarChar(255)          // e.g., "Data Structures"
+  semester    Int                                // 1-8
+  department  String   @default("Computer Science") @db.VarChar(100)
+  isApproved  Boolean  @default(false)           // Requires admin approval
+  createdAt   DateTime @default(now())
+  
+  faculty     User[]   @relation("FacultySubjects")
+  quizzes     Quiz[]
+}
+
+model Quiz {
+  id                String        @id @default(cuid()) @db.VarChar(30)
+  title             String        @db.VarChar(255)
+  description       String?       @db.Text
+  assignedBatches   Json?         // Array of allowed batches e.g. ["2024-28", "2023-27"]
+  targetSection     String?       @db.VarChar(10) // Section restriction e.g. "A", "B"
+  timePerQuestion   Int           @default(30)
+  totalQuestions    Int           @default(10)
+  enforcementMode   String        @default("NORMAL") @db.VarChar(20) // NORMAL, STRICT
+  availableFrom     DateTime?
+  availableUntil    DateTime?
+  showScore         Boolean       @default(true)
+  showAnswers       Boolean       @default(false)
+  isPublished       Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  facultyId         String        @db.VarChar(30)
+  faculty           User          @relation("FacultyQuizzes", fields: [facultyId], references: [id])
+  subjectId         String        @db.VarChar(30)
+  subject           Subject       @relation(fields: [subjectId], references: [id])
+  questions         Question[]
+  attempts          QuizAttempt[]
+}
+
+model Question {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  text           String   @db.Text
+  type           String   @default("MULTIPLE_CHOICE") @db.VarChar(30) // MULTIPLE_CHOICE, CHECKBOX, SHORT_ANSWER, LONG_ANSWER, DROPDOWN
+  options        String   @db.Text // JSON array of options
+  correctIndex   Int      @default(0)
+  correctIndices String   @default("[]") @db.Text // JSON array for checkbox questions
+  points         Int      @default(1)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  
+  quizId         String   @db.VarChar(30)
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers        Answer[]
+}
+
+
+model QuizAttempt {
+  id              String        @id @default(cuid()) @db.VarChar(30)
+  questionOrder   String        @db.Text
+  currentIndex    Int           @default(0)
+  status          String        @default("IN_PROGRESS") @db.VarChar(20)
+  score           Float         @default(0)
+  totalPoints     Int           @default(0)
+  violationCount  Int           @default(0)
+  startedAt       DateTime      @default(now())
+  lastActivityAt  DateTime      @default(now())
+  submittedAt     DateTime?
+  
+  studentId       String        @db.VarChar(30)
+  student         User          @relation(fields: [studentId], references: [id])
+  quizId          String        @db.VarChar(30)
+  quiz            Quiz          @relation(fields: [quizId], references: [id])
+  answers         Answer[]
+  violations      ViolationLog[]
+  
+  @@unique([studentId, quizId])
+}
+
+model Answer {
+  id              String      @id @default(cuid()) @db.VarChar(30)
+  selectedIndex   Int?        // For single choice
+  selectedIndices String?     @db.Text // JSON array for multiple choice (checkbox)
+  textAnswer      String?     @db.Text // For short/long answer
+  isCorrect       Boolean     @default(false)
+  timeTaken       Int         @default(0)
+  pointsAwarded   Float?      // Null = Not Graded, 0+ = Graded
+  feedback        String?     @db.Text // Optional feedback from faculty
+  answeredAt      DateTime    @default(now())
+  
+  attemptId       String      @db.VarChar(30)
+  attempt         QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId      String      @db.VarChar(30)
+  question        Question    @relation(fields: [questionId], references: [id])
+  
+  @@unique([attemptId, questionId])
+}
+
+model ViolationLog {
+  id          String      @id @default(cuid()) @db.VarChar(30)
+  type        String      @db.VarChar(50)
+  description String?     @db.Text
+  occurredAt  DateTime    @default(now())
+  
+  attemptId   String      @db.VarChar(30)
+  attempt     QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}

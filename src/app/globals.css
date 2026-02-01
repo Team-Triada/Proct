@@ -1,26 +1,947 @@
 @import "tailwindcss";
 
+@theme {
+  --color-accent: var(--accent);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --color-theme-primary: var(--bg-primary);
+  --color-theme-secondary: var(--bg-secondary);
+  --color-theme-tertiary: var(--bg-tertiary);
+  --color-theme-muted: var(--text-muted);
+}
+
+/* Layout utilities */
+.max-w-5xl {
+  max-width: 1024px;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Theme utilities */
+.bg-theme {
+  background-color: var(--bg-primary);
+}
+
+.bg-theme-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-theme-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.bg-theme-tertiary {
+  background-color: var(--bg-tertiary);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+}
+
+.text-theme-primary {
+  color: var(--text-primary);
+}
+
+.text-theme-secondary {
+  color: var(--text-secondary);
+}
+
+.text-theme-muted {
+  color: var(--text-muted);
+}
+
+.border-theme {
+  border-color: var(--border);
+}
+
+.border-theme-subtle {
+  border-color: var(--border-subtle);
+}
+
+/* ============================================
+   THEME VARIABLES
+   ============================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Default to dark */
+  --bg-primary: #09090b;
+  --bg-secondary: #0f0f12;
+  --bg-tertiary: #18181b;
+  --bg-elevated: #1c1c21;
+
+  --border: #27272a;
+  --border-subtle: #1f1f23;
+
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+
+  --accent: #ef4444;
+  --accent-muted: #dc2626;
+  --accent-subtle: rgba(239, 68, 68, 0.1);
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-elevated: #e2e8f0;
+
+  --border: #e2e8f0;
+  --border-subtle: #f1f5f9;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --accent: #ef4444;
+  --accent-muted: #dc2626;
+  --accent-subtle: rgba(239, 68, 68, 0.1);
+
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+[data-theme="dark"] {
+  --bg-primary: #09090b;
+  --bg-secondary: #0f0f12;
+  --bg-tertiary: #18181b;
+  --bg-elevated: #1c1c21;
+
+  --border: #27272a;
+  --border-subtle: #1f1f23;
+
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+}
+
+
+
+.ai-poison {
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+  pointer-events: none;
+  z-index: -100;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+
+/* Typography Utilities */
+.font-manrope {
+  font-family: var(--font-manrope), sans-serif;
+}
+
+
+.font-inter {
+  font-family: var(--font-inter), sans-serif;
+}
+
+.font-instrument {
+  font-family: var(--font-instrument), serif;
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   COMPONENTS
+   ============================================ */
+
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--accent-muted);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-elevated);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  gap: 6px;
+}
+
+/* Card */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 24px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.card-sm {
+  padding: 16px;
+}
+
+.card-interactive {
+  transition: all 0.2s ease;
+}
+
+.card-interactive:hover {
+  border-color: var(--border);
+  background: var(--bg-tertiary);
+}
+
+/* Input */
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+/* Label */
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 99px;
+}
+
+.badge-primary {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.badge-success {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.badge-neutral {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+/* Stat */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Table */
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+td {
+  padding: 12px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+/* Progress */
+.progress {
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Quiz Option */
+.quiz-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  text-align: left;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.quiz-option:hover {
+  border-color: var(--border);
+  background: var(--bg-tertiary);
+}
+
+.quiz-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+/* Timer */
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border-radius: 99px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.timer-warning {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Watermark */
+.watermark-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.watermark-text {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(239, 68, 68, 0.15);
+  transform: rotate(-35deg);
+  user-select: none;
+  transform: rotate(-35deg);
+  user-select: none;
+}
+
+/* Spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enforcement Mode Buttons */
+.enforcement-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.enforcement-btn:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-tertiary);
+}
+
+.enforcement-btn:active {
+  transform: scale(0.98);
+}
+
+.enforcement-btn.selected {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+/* Option Letter Button */
+.option-letter {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.option-letter:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.option-letter:active {
+  transform: scale(0.95);
+}
+
+.option-letter.selected {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+}
+
+/* Color Utilities */
+.text-success {
+  color: var(--success);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-danger {
+  background-color: var(--danger);
+}
+
+.border-danger {
+  border-color: var(--danger);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+  }
+
+  .btn {
+    padding: 14px 20px;
+    font-size: 15px;
+    min-height: 48px;
+  }
+
+  .btn-lg {
+    padding: 16px 24px;
+    min-height: 56px;
+    font-size: 16px;
+    width: 100%;
+  }
+
+  .input {
+    padding: 14px 16px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .card-sm {
+    padding: 12px;
+  }
+
+  .quiz-option {
+    padding: 16px;
+    min-height: 60px;
+  }
+
+  .enforcement-btn {
+    padding: 14px;
+  }
+
+  .option-letter {
+    width: 48px;
+    height: 48px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  h2 {
+    font-size: 16px;
+  }
+
+  .table-container {
+    border-radius: 8px;
+  }
+
+  th,
+  td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .badge {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+  .btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .enforcement-btn {
+    padding: 12px;
+  }
+
+  .option-letter {
+    width: 40px;
+    height: 40px;
+    font-size: 13px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+
+  .btn,
+  .enforcement-btn,
+  .option-letter,
+  .quiz-option,
+  .card-interactive {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:active,
+  .enforcement-btn:active,
+  .option-letter:active,
+  .quiz-option:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Safe area padding for notched phones */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+
+  .sticky {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+}
+
+/* iOS Safari Specific Fixes */
+@supports (-webkit-touch-callout: none) {
+
+  /* Fix for iOS Safari 100vh bug */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Prevent iOS pinch zoom */
+  html {
+    touch-action: manipulation;
+  }
+
+  /* Better touch targets on iOS */
+  button,
+  .btn,
+  input[type="submit"],
+  input[type="button"] {
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+  }
+
+  /* Prevent iOS from zooming on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile Navigation Safe Padding */
+.pb-safe {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.mb-safe {
+  margin-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* Mobile Quiz Option Improvements */
+@media (max-width: 640px) {
+  .quiz-option {
+    padding: 16px;
+    min-height: 60px;
+    touch-action: manipulation;
+  }
+
+  /* Prevent text selection on touch */
+  .quiz-option,
+  .option-letter {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Better timer visibility on mobile */
+  .timer {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  /* Responsive grid for quiz creation */
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Stack navigation on mobile */
+  .nav-links {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* Extra small screens (iPhone SE, etc.) */
+@media (max-width: 380px) {
+  .btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .enforcement-btn {
+    padding: 12px;
+  }
+
+  .option-letter {
+    width: 40px;
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Smaller text for compact screens */
+  .text-xs {
+    font-size: 11px;
+  }
+
+  h1 {
+    font-size: 18px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+
+  .btn,
+  .enforcement-btn,
+  .option-letter,
+  .quiz-option,
+  .card-interactive {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:active,
+  .enforcement-btn:active,
+  .option-letter:active,
+  .quiz-option:active {
+    transform: scale(0.98);
+  }
+
+  /* Larger hit areas for touch */
+  .checkbox-root {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Reduce motion on mobile for performance */
+  @media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Landscape Mobile Specific */
+@media (max-height: 500px) and (orientation: landscape) {
+  .min-h-screen {
+    min-height: auto;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  /* Compact quiz UI in landscape */
+  .quiz-container {
+    padding: 8px;
+  }
 }
