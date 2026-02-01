@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="public/logo-dark.png" alt="Proct Logo" width="200"/>
+  <img src="public/logo-light.png" alt="Proct Logo" width="200"/>
 </p>
-
-<h1 align="center">Proct</h1>
 
 <p align="center">
   <strong>Integrity-First Online Quiz Platform</strong><br>
