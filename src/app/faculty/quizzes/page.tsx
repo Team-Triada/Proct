@@ -73,45 +73,60 @@ export default async function FacultyQuizzesPage() {
                                     {subjectQuizzes[0]?.subject.name}
                                 </h2>
                                 <div className="space-y-3">
-                                    {subjectQuizzes.map((quiz: any) => (
-                                        <div key={quiz.id} className="card card-interactive group">
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <h3 className="font-medium text-theme-primary truncate">{quiz.title}</h3>
-                                                        <span className={`badge ${quiz.isPublished ? 'badge-success' : 'badge-neutral'}`}>
-                                                            {quiz.isPublished ? 'Published' : 'Draft'}
-                                                        </span>
-                                                        {quiz.enforcementMode === 'STRICT' && (
-                                                            <span className="badge badge-danger">Strict</span>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-4 text-sm text-theme-muted">
-                                                        <span>{quiz._count.questions} questions</span>
-                                                        <span>•</span>
-                                                        <span>{quiz._count.attempts} attempts</span>
-                                                        <span>•</span>
-                                                        <span>{quiz.timePerQuestion}s/question</span>
-                                                    </div>
-                                                </div>
+                                    {subjectQuizzes.map((quiz: any) => {
+                                        const yearBatches = (quiz.assignedBatches as string[] | null) || []
+                                        const targetBatch = quiz.targetSection
 
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Link
-                                                        href={`/faculty/quizzes/${quiz.id}`}
-                                                        className="btn btn-ghost text-sm"
-                                                    >
-                                                        View
-                                                    </Link>
-                                                    <Link
-                                                        href={`/faculty/quizzes/${quiz.id}/edit`}
-                                                        className="btn btn-secondary text-sm"
-                                                    >
-                                                        Edit
-                                                    </Link>
+                                        return (
+                                            <div key={quiz.id} className="card card-interactive group">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                            <h3 className="font-medium text-theme-primary truncate">{quiz.title}</h3>
+                                                            <span className={`badge ${quiz.isPublished ? 'badge-success' : 'badge-neutral'}`}>
+                                                                {quiz.isPublished ? 'Published' : 'Draft'}
+                                                            </span>
+                                                            {quiz.enforcementMode === 'STRICT' && (
+                                                                <span className="badge badge-danger">Strict</span>
+                                                            )}
+                                                            {yearBatches.length > 0 && (
+                                                                <span className="badge badge-neutral text-xs">
+                                                                    Year: {yearBatches.join(', ')}
+                                                                </span>
+                                                            )}
+                                                            {targetBatch && (
+                                                                <span className="badge badge-primary text-xs">
+                                                                    Batch {targetBatch}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-4 text-sm text-theme-muted">
+                                                            <span>{quiz._count.questions} questions</span>
+                                                            <span>•</span>
+                                                            <span>{quiz._count.attempts} attempts</span>
+                                                            <span>•</span>
+                                                            <span>{quiz.timePerQuestion}s/question</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Link
+                                                            href={`/faculty/quizzes/${quiz.id}`}
+                                                            className="btn btn-ghost text-sm"
+                                                        >
+                                                            View
+                                                        </Link>
+                                                        <Link
+                                                            href={`/faculty/quizzes/${quiz.id}/edit`}
+                                                            className="btn btn-secondary text-sm"
+                                                        >
+                                                            Edit
+                                                        </Link>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             </div>
                         ))}

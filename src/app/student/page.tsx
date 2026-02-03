@@ -19,7 +19,7 @@ export default async function StudentDashboard() {
 
     const user = session.user as any
 
-    // Get student's semester, batch, and section
+    // Get student's semester, batch (year), and section (batch number)
     const student = await prisma.user.findUnique({
         where: { id: user.id },
         select: { semester: true, batch: true, section: true }
@@ -29,9 +29,10 @@ export default async function StudentDashboard() {
     const studentBatch = student?.batch || null
     const studentSection = student?.section || null
 
-    // Get subjects for this semester - fetch all published quizzes, filter in memory
+
+    // Get subjects - fetch all published quizzes, filter in memory
     const rawSubjects = await prisma.subject.findMany({
-        where: { semester },
+        // where: { semester }, // Removed semester filtering
         include: {
             quizzes: {
                 where: {
@@ -67,19 +68,14 @@ export default async function StudentDashboard() {
                 }
             }
 
-            // Check Batch restriction  
-            const hasBatchRestriction = !!batchRestriction
-            let batchMatches = true
-            if (hasBatchRestriction) {
-                if (!studentSection) {
-                    batchMatches = false
-                } else {
-                    batchMatches = String(studentSection) === String(batchRestriction)
-                }
+            // Check Section (Batch 1-12) restriction
+            let sectionMatches = true
+            if (batchRestriction) {
+                sectionMatches = studentSection === batchRestriction
             }
 
-            // Quiz is visible only if BOTH restrictions are satisfied (or not set)
-            return yearMatches && batchMatches
+            // Quiz is visible only if all restrictions are satisfied (or not set)
+            return yearMatches && sectionMatches
         })
     }))
 

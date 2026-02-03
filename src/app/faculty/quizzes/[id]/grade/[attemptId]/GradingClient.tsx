@@ -99,19 +99,19 @@ export default function GradingClient({
     return (
         <div className="min-h-screen bg-theme p-8 pb-32">
             <div className="max-w-4xl mx-auto space-y-8">
-                <div className="flex items-center justify-between sticky top-0 bg-theme/95 backdrop-blur z-10 py-4 border-b border-theme-subtle">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between sticky top-0 bg-theme/95 backdrop-blur z-10 py-4 border-b border-theme-subtle gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-theme-primary">Grading: {studentName}</h1>
                         <p className="text-theme-muted">{quizTitle}</p>
                     </div>
-                    <div className="flex gap-4">
-                        <Link href={`/faculty/quizzes/${data[0]?.question.quizId}/results`} className="btn btn-ghost">
+                    <div className="flex gap-4 w-full sm:w-auto">
+                        <Link href={`/faculty/quizzes/${data[0]?.question.quizId}/results`} className="btn btn-ghost flex-1 sm:flex-none text-center">
                             Cancel
                         </Link>
                         <button
                             onClick={saveGrades}
                             disabled={saving}
-                            className="btn btn-primary"
+                            className="btn btn-primary flex-1 sm:flex-none"
                         >
                             {saving ? 'Saving...' : 'Save Grades'}
                         </button>
@@ -128,7 +128,7 @@ export default function GradingClient({
 
                         return (
                             <div key={question.id} className="card p-6 space-y-4">
-                                <div className="flex justify-between items-start">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                                     <div className="flex gap-3">
                                         <span className="badge badge-neutral h-fit mt-1">Q{questionNumber}</span>
                                         <div>
@@ -136,19 +136,17 @@ export default function GradingClient({
                                             <p className="text-xs text-theme-muted uppercase mt-1">{question.type.replace('_', ' ')} • {question.points} Points</p>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <label className="text-sm text-theme-muted">Points:</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max={question.points}
-                                                value={grade.points}
-                                                onChange={(e) => handleGradeChange(question.id, 'points', Number(e.target.value))}
-                                                className="input input-sm w-20 text-right font-mono"
-                                            />
-                                            <span className="text-theme-muted">/ {question.points}</span>
-                                        </div>
+                                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                                        <label className="text-sm text-theme-muted">Points:</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={question.points}
+                                            value={grade.points}
+                                            onChange={(e) => handleGradeChange(question.id, 'points', Number(e.target.value))}
+                                            className="input input-sm w-20 text-right font-mono"
+                                        />
+                                        <span className="text-theme-muted">/ {question.points}</span>
                                     </div>
                                 </div>
 
@@ -192,7 +190,7 @@ export default function GradingClient({
                         )
                     })}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }

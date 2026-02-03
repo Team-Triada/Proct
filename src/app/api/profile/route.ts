@@ -24,6 +24,7 @@ export async function GET() {
             campusId: true,
             semester: true,
             batch: true,
+            section: true,
             department: true,
             image: true,
             role: true
@@ -49,7 +50,7 @@ export async function PUT(request: Request) {
     const user = session.user as any
     const body = await request.json()
 
-    const { name, rollNumber, campusId, semester, batch, department, image } = body
+    const { name, rollNumber, campusId, semester, batch, section, department, image } = body
 
     // Validate required fields
     if (!name || name.trim().length === 0) {
@@ -65,6 +66,7 @@ export async function PUT(request: Request) {
                 campusId: campusId?.trim() || null,
                 semester: semester ? parseInt(semester) : null,
                 batch: batch?.trim() || null,
+                section: section?.trim() || null,
                 department: department?.trim() || null,
                 image: image?.trim() || null
             },
@@ -76,6 +78,7 @@ export async function PUT(request: Request) {
                 campusId: true,
                 semester: true,
                 batch: true,
+                section: true,
                 department: true,
                 image: true,
                 role: true

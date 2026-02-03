@@ -12,12 +12,13 @@ model User {
   email        String        @unique @db.VarChar(255)
   password     String        @db.VarChar(255)
   name         String        @db.VarChar(255)
-  rollNumber   String?       @unique @db.VarChar(50)
+  rollNumber   String?       @unique @db.VarChar(50) // e.g. "23BBCCED009", "24BBCCCD099"
   role         String        @default("STUDENT") @db.VarChar(20) // ADMIN, FACULTY, STUDENT
   department   String?       @db.VarChar(100)
   semester     Int?          // For students: 1-8
-  batch        String?       @db.VarChar(20) // Year e.g. \"2024-27\"\n  section      String?       @db.VarChar(10) // Batch number e.g. \"1\", \"2\" (displayed as \"Batch 1\")
-  campusId     String?       @db.VarChar(50) // e.g. "BLR-123"
+  batch        String?       @db.VarChar(20) // Year e.g. "2024-27"
+  section      String?       @db.VarChar(10) // Batch number e.g. "1", "2" (displayed as "Batch 1")
+  campusId     String?       @db.VarChar(50) // Numeric ID e.g. "29849", "30824"
   image        String?       @db.Text // URL
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -48,7 +49,10 @@ model Quiz {
   targetSection     String?       @db.VarChar(10) // Section restriction e.g. "A", "B"
   timePerQuestion   Int           @default(30)
   totalQuestions    Int           @default(10)
+
   enforcementMode   String        @default("NORMAL") @db.VarChar(20) // NORMAL, STRICT
+  timingMode        String        @default("PER_QUESTION") @db.VarChar(20) // PER_QUESTION, TOTAL_DURATION, NO_TIME_LIMIT
+  totalDuration     Int?          // In minutes, for TOTAL_DURATION mode
   availableFrom     DateTime?
   availableUntil    DateTime?
   showScore         Boolean       @default(true)
@@ -90,9 +94,11 @@ model QuizAttempt {
   score           Float         @default(0)
   totalPoints     Int           @default(0)
   violationCount  Int           @default(0)
+  reloadCount     Int           @default(0)
   startedAt       DateTime      @default(now())
-  lastActivityAt  DateTime      @default(now())
-  submittedAt     DateTime?
+  lastActivityAt           DateTime      @default(now())
+  currentQuestionStartTime DateTime      @default(now())
+  submittedAt              DateTime?
   
   studentId       String        @db.VarChar(30)
   student         User          @relation(fields: [studentId], references: [id])

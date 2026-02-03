@@ -56,14 +56,14 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
             { name: 'My Attempts', href: '/student/attempts' },
         ]}>
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-semibold mb-2">{attempt.quiz.title} - Results</h1>
                         <p className="text-theme-muted">
                             Attempted on {new Date(attempt.startedAt).toLocaleDateString()}
                         </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right w-full sm:w-auto p-4 rounded-xl bg-theme-surface border border-theme-subtle sm:border-none sm:bg-transparent sm:p-0">
                         <div className="text-3xl font-bold text-accent">
                             {attempt.score} <span className="text-lg text-theme-muted font-normal">/ {attempt.totalPoints}</span>
                         </div>
@@ -73,51 +73,61 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    {fullData.map((item: any) => (
-                        <div key={item.question.id} className="card p-6">
-                            <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-lg font-medium">Question {item.questionNumber}</h3>
-                                <span className="badge badge-neutral">{item.question.points} pts</span>
+                {fullData.map((item: any) => (
+                    <div key={item.question.id} className="card p-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-lg font-medium">Question {item.questionNumber}</h3>
+                            <span className="badge badge-neutral">{item.question.points} pts</span>
+                        </div>
+
+                        <p className="text-theme-primary mb-6 text-lg">{item.question.text}</p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-xs font-semibold text-theme-muted uppercase tracking-wider mb-2">Your Answer</p>
+                                <div className={`p-4 rounded-lg bg-theme-tertiary border ${item.answer?.pointsAwarded === null
+                                    ? 'border-warning/30 bg-warning/5'
+                                    : item.answer?.isCorrect
+                                        ? 'border-success/30 bg-success/5'
+                                        : 'border-danger/30 bg-danger/5'
+                                    }`}>
+                                    {RenderAnswer(item.question, item.answer)}
+                                </div>
                             </div>
 
-                            <p className="text-theme-primary mb-6 text-lg">{item.question.text}</p>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <p className="text-xs font-semibold text-theme-muted uppercase tracking-wider mb-2">Your Answer</p>
-                                    <div className={`p-4 rounded-lg bg-theme-tertiary border ${item.answer?.isCorrect ? 'border-success/30 bg-success/5' : 'border-danger/30 bg-danger/5'}`}>
-                                        {RenderAnswer(item.question, item.answer)}
-                                    </div>
+                            {item.answer?.feedback && (
+                                <div className="bg-theme-tertiary p-4 rounded-lg border border-theme-subtle">
+                                    <p className="text-xs font-semibold text-theme-muted uppercase tracking-wider mb-1">Feedback</p>
+                                    <p className="text-sm">{item.answer.feedback}</p>
                                 </div>
+                            )}
 
-                                {item.answer?.feedback && (
-                                    <div className="bg-theme-tertiary p-4 rounded-lg border border-theme-subtle">
-                                        <p className="text-xs font-semibold text-theme-muted uppercase tracking-wider mb-1">Feedback</p>
-                                        <p className="text-sm">{item.answer.feedback}</p>
-                                    </div>
-                                )}
-
-                                <div className="flex items-center gap-2 mt-2">
-                                    <span className={`text-sm font-medium ${item.answer?.pointsAwarded && item.answer.pointsAwarded > 0 ? 'text-success' : 'text-danger'}`}>
+                            <div className="flex items-center gap-2 mt-2">
+                                {item.answer?.pointsAwarded === null ? (
+                                    <span className="text-sm font-medium text-warning flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-warning"></span>
+                                        Submitted for Evaluation
+                                    </span>
+                                ) : (
+                                    <span className={`text-sm font-medium ${(item.answer?.pointsAwarded && item.answer.pointsAwarded > 0) ? 'text-success' : 'text-danger'}`}>
                                         Awarded: {item.answer?.pointsAwarded ?? 0} / {item.question.points}
                                     </span>
-                                </div>
-
-                                {item.answer && item.answer.pointsAwarded !== null && item.answer.pointsAwarded < item.question.points && (
-                                    <div className="mt-4 pt-4 border-t border-theme-subtle">
-                                        <p className="text-xs font-semibold text-success uppercase tracking-wider mb-2">Correct Answer</p>
-                                        <div className="p-3 rounded-lg bg-success/10 border border-success/30 text-success">
-                                            {RenderCorrectAnswer(item.question)}
-                                        </div>
-                                    </div>
                                 )}
                             </div>
+
+                            {item.answer && item.answer.pointsAwarded !== null && item.answer.pointsAwarded < item.question.points && (
+                                <div className="mt-4 pt-4 border-t border-theme-subtle">
+                                    <p className="text-xs font-semibold text-success uppercase tracking-wider mb-2">Correct Answer</p>
+                                    <div className="p-3 rounded-lg bg-success/10 border border-success/30 text-success">
+                                        {RenderCorrectAnswer(item.question)}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    ))}
-                </div>
+                    </div>
+                ))}
             </div>
-        </DashboardLayout>
+        </DashboardLayout >
     )
 }
 

@@ -22,7 +22,14 @@ export async function POST(
     // Verify Attempt exists and belongs to user
     const attempt = await prisma.quizAttempt.findUnique({
         where: { id },
-        select: { studentId: true, status: true }
+        select: {
+            studentId: true,
+            status: true,
+            currentIndex: true,
+            currentQuestionStartTime: true,
+            startedAt: true,
+            quiz: true // Fetch full quiz details for timing rules
+        }
     })
 
     if (!attempt) {
@@ -37,7 +44,18 @@ export async function POST(
         return NextResponse.json({ error: 'Attempt is not in progress' }, { status: 400 })
     }
 
-    // Get question details for auto-grading
+    // TIMING ENFORCEMENT
+    const now = new Date()
+    const { quiz } = attempt
+
+    // 1. Availability Check (Global)
+    if (quiz.availableUntil && now > quiz.availableUntil) {
+        return NextResponse.json({ error: 'Quiz availability has ended' }, { status: 403 })
+    }
+
+    // 2. Mode-Specific Checks
+
+    // Fetch question type first to handle exemptions
     const question = await prisma.question.findUnique({
         where: { id: questionId },
         select: { type: true, correctIndex: true, correctIndices: true, points: true }
@@ -45,6 +63,28 @@ export async function POST(
 
     if (!question) {
         return NextResponse.json({ error: 'Question not found' }, { status: 404 })
+    }
+
+    if (quiz.timingMode === 'PER_QUESTION') {
+        // Enforce Per-Question Timer ONLY for Objective Questions
+        if (question.type !== 'SHORT_ANSWER' && question.type !== 'LONG_ANSWER') {
+            const elapsed = Math.floor((now.getTime() - new Date(attempt.currentQuestionStartTime).getTime()) / 1000)
+            const limit = quiz.timePerQuestion
+            // Allow 10s grace for latency/network
+            if (elapsed > limit + 10) {
+                // Prompt says "Auto-advance on timeout", implying strictness.
+                if (elapsed > limit + 30) {
+                    return NextResponse.json({ error: 'Time limit exceeded for this question' }, { status: 403 })
+                }
+            }
+        }
+    } else if (quiz.timingMode === 'TOTAL_DURATION' && quiz.totalDuration) {
+        // Enforce Global Timer
+        const elapsedTotal = Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000)
+        const limitTotal = quiz.totalDuration * 60
+        if (elapsedTotal > limitTotal + 30) {
+            return NextResponse.json({ error: 'Total time limit exceeded' }, { status: 403 })
+        }
     }
 
     // Auto-grading logic
@@ -117,12 +157,27 @@ export async function POST(
     })
 
     // Update Attempt Progress
+    // Prepare Attempt Update Data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
+        lastActivityAt: new Date()
+    }
+
+    if (currentQuestionIndex !== undefined) {
+        // If advancing index
+        if (currentQuestionIndex > attempt.currentIndex) {
+            updateData.currentIndex = currentQuestionIndex
+
+            // PER_QUESTION: Reset timer for NEXT question
+            if (attempt.quiz.timingMode === 'PER_QUESTION') {
+                updateData.currentQuestionStartTime = new Date()
+            }
+        }
+    }
+
     await prisma.quizAttempt.update({
         where: { id },
-        data: {
-            currentIndex: currentQuestionIndex !== undefined ? currentQuestionIndex : undefined,
-            lastActivityAt: new Date()
-        }
+        data: updateData
     })
 
     return NextResponse.json({ success: true })

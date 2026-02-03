@@ -51,11 +51,8 @@ export async function POST(
 
     if (!student) return NextResponse.json({ error: 'Student profile not found' }, { status: 403 })
 
-    // 1. Semester Check
-    if (quiz.subject.semester !== student.semester) {
-        console.log(`[Quiz Start Denied] Semester Mismatch. Quiz: ${quiz.subject.semester}, Student: ${student.semester}`)
-        return NextResponse.json({ error: `This quiz is for Semester ${quiz.subject.semester}` }, { status: 403 })
-    }
+    // 1. (Semester check removed)
+    // if (quiz.subject.semester !== student.semester) { ... }
 
     // 2. Batch (Year) Check
     const quizBatches = (quiz.assignedBatches as string[] | null) || []
@@ -73,10 +70,11 @@ export async function POST(
         }
     }
 
-    // 3. Section (Class) Check
-    if (quiz.targetSection && quiz.targetSection !== student.section) {
-        console.log(`[Quiz Start Denied] Section Mismatch. Required: ${quiz.targetSection}, Student: ${student.section}`)
-        return NextResponse.json({ error: `This quiz is restricted to Batch ${quiz.targetSection}` }, { status: 403 })
+    // 3. Section (Batch 1-12) Check
+    const targetSection = quiz.targetSection
+    if (targetSection && student.section !== targetSection) {
+        console.log(`[Quiz Start Denied] Section Mismatch. Quiz: ${targetSection}, Student: ${student.section}`)
+        return NextResponse.json({ error: `This quiz is for Batch ${targetSection} only` }, { status: 403 })
     }
 
     // Check if student already has an attempt
@@ -94,26 +92,44 @@ export async function POST(
 
     if (existingAttempt) {
         if (existingAttempt.status === 'IN_PROGRESS') {
-            // Calculate remaining time server-side
-            // Time Limit in Seconds
-            const timeLimitSeconds = quiz.totalQuestions * quiz.timePerQuestion
-
-            // Elapsed Time
+            // Calculate remaining time server-side based on MODE
             const now = new Date()
-            const elapsedSeconds = Math.floor((now.getTime() - new Date(existingAttempt.startedAt).getTime()) / 1000)
-            const remainingSeconds = timeLimitSeconds - elapsedSeconds
+            let remainingSeconds = 0
 
-            // If time expired, auto-submit
-            if (remainingSeconds <= 0) {
-                await prisma.quizAttempt.update({
-                    where: { id: existingAttempt.id },
-                    data: {
-                        status: 'SUBMITTED',
-                        submittedAt: new Date()
-                    }
-                })
-                return NextResponse.json({ error: 'Time expired', status: 'SUBMITTED' }, { status: 400 })
+            if (quiz.timingMode === 'PER_QUESTION') {
+                const questionOrder = JSON.parse(existingAttempt.questionOrder) as string[]
+                const currentData = existingAttempt
+                const currentQId = questionOrder[currentData.currentIndex]
+                const currentQ = quiz.questions.find(q => q.id === currentQId)
+
+                if (currentQ && (currentQ.type === 'SHORT_ANSWER' || currentQ.type === 'LONG_ANSWER')) {
+                    remainingSeconds = -1 // Unlimited
+                } else {
+                    const elapsed = Math.floor((now.getTime() - new Date(existingAttempt.currentQuestionStartTime).getTime()) / 1000)
+                    remainingSeconds = Math.max(0, quiz.timePerQuestion - elapsed)
+                }
+
+                // If expired for this question, we should theoretically move to next, but let's just return 0
+                // and let the client call 'submit' to move forward.
+            } else if (quiz.timingMode === 'TOTAL_DURATION' && quiz.totalDuration) {
+                const elapsed = Math.floor((now.getTime() - new Date(existingAttempt.startedAt).getTime()) / 1000)
+                remainingSeconds = Math.max(0, (quiz.totalDuration * 60) - elapsed)
+            } else if (quiz.timingMode === 'NO_TIME_LIMIT') {
+                // Return seconds until due date
+                if (quiz.availableUntil) {
+                    remainingSeconds = Math.floor((new Date(quiz.availableUntil).getTime() - now.getTime()) / 1000)
+                } else {
+                    remainingSeconds = 999999 // Unlimited effectively
+                }
+            } else {
+                // Fallback (legacy or default)
+                const elapsed = Math.floor((now.getTime() - new Date(existingAttempt.startedAt).getTime()) / 1000)
+                remainingSeconds = (quiz.totalQuestions * quiz.timePerQuestion) - elapsed
             }
+
+            // If time expired (Global or Per-Question), we don't auto-submit here immediately for Per-Q
+            // ensuring client has a chance to sync. But for Global, if 0, we could auto-submit.
+            // For now, let's return the state and let client handle "0 remaining".
 
             // Return Resume State
             return NextResponse.json({
@@ -122,7 +138,9 @@ export async function POST(
                 timeRemaining: remainingSeconds,
                 currentIndex: existingAttempt.currentIndex,
                 answers: existingAttempt.answers,
-                resume: true
+                resume: true,
+                timingMode: quiz.timingMode,
+                totalDuration: quiz.totalDuration
             })
         }
         return NextResponse.json({ error: 'Quiz already completed' }, { status: 400 })
@@ -137,7 +155,29 @@ export async function POST(
     const totalPoints = shuffledQuestions.reduce((sum, q) => sum + q.points, 0)
 
     // Calculate total time for new attempt
-    const totalTime = quiz.totalQuestions * quiz.timePerQuestion
+    // Calculate initial time for new attempt
+    // Calculate initial time for new attempt
+    let initialTime = 0
+    if (quiz.timingMode === 'PER_QUESTION') {
+        // Check first question type
+        const firstQ = quiz.questions.find(q => q.id === questionOrder[0])
+        if (firstQ && (firstQ.type === 'SHORT_ANSWER' || firstQ.type === 'LONG_ANSWER')) {
+            initialTime = -1 // Unlimited for subjective
+        } else {
+            initialTime = quiz.timePerQuestion
+        }
+    } else if (quiz.timingMode === 'TOTAL_DURATION' && quiz.totalDuration) {
+        initialTime = quiz.totalDuration * 60
+    } else if (quiz.timingMode === 'NO_TIME_LIMIT') {
+        if (quiz.availableUntil) {
+            const now = new Date()
+            initialTime = Math.floor((new Date(quiz.availableUntil).getTime() - now.getTime()) / 1000)
+        } else {
+            initialTime = 999999
+        }
+    } else {
+        initialTime = quiz.totalQuestions * quiz.timePerQuestion
+    }
 
     // Create attempt
     const attempt = await prisma.quizAttempt.create({
@@ -153,8 +193,11 @@ export async function POST(
     return NextResponse.json({
         attemptId: attempt.id,
         questionOrder,
-        timeRemaining: totalTime,
+        timeRemaining: initialTime,
         currentIndex: 0,
-        resume: false
+        resume: false,
+        timingMode: quiz.timingMode,
+        totalDuration: quiz.totalDuration,
+        currentQuestionStartTime: new Date()
     })
 }

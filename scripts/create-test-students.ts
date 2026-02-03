@@ -13,29 +13,26 @@ async function main() {
             name: 'Batch 10 Student 2023',
             email: 'batch10_23@college.edu',
             sem: 5,
-            batch: '2023-26',
-            section: '10'
+            batch: '2023-26'
         },
         {
             name: 'Batch 5 Student 2023',
             email: 'batch5_23@college.edu',
             sem: 5,
-            batch: '2023-26',
-            section: '5'
+            batch: '2023-26'
         },
         {
             name: 'Batch 2 Student 2024',
             email: 'batch2_24@college.edu',
             sem: 3,
-            batch: '2024-27',
-            section: '2'
+            batch: '2024-27'
         },
     ]
 
     for (const s of students) {
         const user = await prisma.user.upsert({
             where: { email: s.email },
-            update: { semester: s.sem, batch: s.batch, section: s.section },
+            update: { semester: s.sem, batch: s.batch },
             create: {
                 email: s.email,
                 password: studentPass,
@@ -43,11 +40,10 @@ async function main() {
                 role: 'STUDENT',
                 department: 'Computer Science',
                 semester: s.sem,
-                batch: s.batch,
-                section: s.section
+                batch: s.batch
             }
         })
-        console.log(`✓ Created/Updated: ${user.email} (Year: ${s.batch}, Batch: ${s.section})`)
+        console.log(`✓ Created/Updated: ${user.email} (Year: ${s.batch})`)
     }
 
     console.log('\n=== CREDENTIALS ===')
@@ -55,7 +51,6 @@ async function main() {
         Email: s.email,
         Password: 'student123',
         Year: s.batch,
-        Batch: `Batch ${s.section}`,
         Semester: s.sem
     })))
 }

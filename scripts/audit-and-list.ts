@@ -17,8 +17,7 @@ async function main() {
         Email: u.email,
         Department: u.department || '-',
         Semester: u.semester || '-',
-        Batch: u.batch || '-',
-        Section: u.section || '-'
+        Batch: u.batch || '-'
     })))
 
     // 2. Integration Test
@@ -34,16 +33,13 @@ async function main() {
         data: { email: `faculty.${timestamp}@test.com`, password: 'hash', name: 'Test Faculty', role: 'FACULTY' }
     })
     const studentOk = await prisma.user.create({
-        data: { email: `studentk.${timestamp}@test.com`, password: 'hash', name: 'Student OK', role: 'STUDENT', semester: 1, batch: '2025-28', section: '1' }
+        data: { email: `studentk.${timestamp}@test.com`, password: 'hash', name: 'Student OK', role: 'STUDENT', semester: 1, batch: '2025-28' }
     })
     const studentFailBatch = await prisma.user.create({
-        data: { email: `studentfb.${timestamp}@test.com`, password: 'hash', name: 'Student Fail Batch', role: 'STUDENT', semester: 1, batch: '2024-27', section: '1' }
-    })
-    const studentFailSec = await prisma.user.create({
-        data: { email: `studentfs.${timestamp}@test.com`, password: 'hash', name: 'Student Fail Sec', role: 'STUDENT', semester: 1, batch: '2025-28', section: '2' }
+        data: { email: `studentfb.${timestamp}@test.com`, password: 'hash', name: 'Student Fail Batch', role: 'STUDENT', semester: 1, batch: '2024-27' }
     })
     const studentFailSem = await prisma.user.create({
-        data: { email: `studentfsem.${timestamp}@test.com`, password: 'hash', name: 'Student Fail Sem', role: 'STUDENT', semester: 2, batch: '2025-28', section: '1' }
+        data: { email: `studentfsem.${timestamp}@test.com`, password: 'hash', name: 'Student Fail Sem', role: 'STUDENT', semester: 2, batch: '2025-28' }
     })
 
     // B. Create Subject (Pending -> Approved)
@@ -90,8 +86,6 @@ async function main() {
         // @ts-ignore
         const batches = (quiz.assignedBatches as string[]) || []
         if (batches.length > 0 && !batches.includes(student.batch)) return false
-        // 3. Section Check
-        if (student.section !== quiz.targetSection) return false
         return true
     }
 
@@ -101,9 +95,6 @@ async function main() {
     if (!checkVisibility(studentFailBatch)) console.log('✅ Student Fail Batch blocked')
     else console.error('❌ ERROR: Student Fail Batch should be blocked')
 
-    if (!checkVisibility(studentFailSec)) console.log('✅ Student Fail Section blocked')
-    else console.error('❌ ERROR: Student Fail Section should be blocked')
-
     if (!checkVisibility(studentFailSem)) console.log('✅ Student Fail Semester blocked')
     else console.error('❌ ERROR: Student Fail Semester should be blocked')
 
@@ -111,7 +102,7 @@ async function main() {
     console.log('\n--- CLEANUP ---')
     await prisma.quiz.delete({ where: { id: quiz.id } })
     await prisma.subject.delete({ where: { id: subject.id } })
-    await prisma.user.deleteMany({ where: { id: { in: [admin.id, faculty.id, studentOk.id, studentFailBatch.id, studentFailSec.id, studentFailSem.id] } } })
+    await prisma.user.deleteMany({ where: { id: { in: [admin.id, faculty.id, studentOk.id, studentFailBatch.id, studentFailSem.id] } } })
     console.log('Cleanup complete.')
 }
 

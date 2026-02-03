@@ -50,10 +50,8 @@ export async function GET(
 
         if (!student) return NextResponse.json({ error: 'Student profile not found' }, { status: 403 })
 
-        // 1. Semester Check (Safety Rule)
-        if (student.semester !== quiz.subject.semester) {
-            return NextResponse.json({ error: 'This quiz is not for your semester' }, { status: 403 })
-        }
+        // 1. (Semester Check removed)
+        // if (student.semester !== quiz.subject.semester) { ... }
 
         // 2. Batch (Year) Check
         const assignedBatches = (quiz.assignedBatches as string[] | null) || []
@@ -66,9 +64,10 @@ export async function GET(
             }
         }
 
-        // 3. Section (Class) Check
-        if (quiz.targetSection && quiz.targetSection !== student.section) {
-            return NextResponse.json({ error: 'This quiz is not for your batch' }, { status: 403 })
+        // 3. Section (Batch 1-12) Check
+        const targetSection = quiz.targetSection
+        if (targetSection && student.section !== targetSection) {
+            return NextResponse.json({ error: `This quiz is for Batch ${targetSection} only` }, { status: 403 })
         }
 
         // 4. Hide correct answers for students
@@ -111,7 +110,7 @@ export async function PUT(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { title, subject, description, timePerQuestion, enforcementMode, isPublished, questions } = body
+    const { title, subject, description, timePerQuestion, enforcementMode, isPublished, questions, targetSection, assignedBatches } = body
 
     // Update quiz details
     const updatedQuiz = await prisma.quiz.update({
@@ -123,7 +122,9 @@ export async function PUT(
             ...(timePerQuestion && { timePerQuestion }),
             ...(enforcementMode && { enforcementMode }),
             ...(isPublished !== undefined && { isPublished }),
-            ...(questions && { totalQuestions: questions.length })
+            ...(questions && { totalQuestions: questions.length }),
+            ...(targetSection !== undefined && { targetSection: targetSection || null }),
+            ...(assignedBatches !== undefined && { assignedBatches })
         }
     })
 

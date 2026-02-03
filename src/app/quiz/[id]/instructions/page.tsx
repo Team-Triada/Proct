@@ -22,7 +22,7 @@ export default async function QuizInstructionsPage({
     const quiz = await prisma.quiz.findUnique({
         where: { id },
         include: {
-            subject: true, // Added subject include
+            subject: true,
             faculty: { select: { name: true } },
             _count: { select: { questions: true } }
         }
@@ -31,6 +31,36 @@ export default async function QuizInstructionsPage({
     if (!quiz || !quiz.isPublished) {
         redirect('/student')
     }
+
+    // Access Control: Verify student is eligible for this quiz
+    const student = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { semester: true, batch: true, section: true }
+    })
+
+    if (!student) {
+        redirect('/student')
+    }
+
+    // (Semester check removed)
+    // if (student.semester !== quiz.subject.semester) { ... }
+
+    // Check year (assignedBatches) restriction
+    const assignedBatches = (quiz.assignedBatches as string[] | null) || []
+    if (assignedBatches.length > 0) {
+        const studentBatch = student.batch?.trim().toUpperCase() || ''
+        const normalizedQuizBatches = assignedBatches.map(b => b.trim().toUpperCase())
+        if (!normalizedQuizBatches.includes(studentBatch)) {
+            redirect('/student?error=year')
+        }
+    }
+
+    // Check section (Batch 1-12) restriction
+    const targetSection = quiz.targetSection
+    if (targetSection && student.section !== targetSection) {
+        redirect('/student?error=section')
+    }
+
 
     const existingAttempt = await prisma.quizAttempt.findUnique({
         where: {

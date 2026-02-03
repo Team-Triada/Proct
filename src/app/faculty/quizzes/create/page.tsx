@@ -45,8 +45,10 @@ export default function CreateQuizPage() {
     const [subjectId, setSubjectId] = useState(preselectedSubject || '')
     const [description, setDescription] = useState('')
     const [timePerQuestion, setTimePerQuestion] = useState(30)
+
     const [enforcementMode, setEnforcementMode] = useState('NORMAL')
-    const [targetBatch, setTargetBatch] = useState('')
+
+    const [targetYear, setTargetYear] = useState('')
     const [targetSection, setTargetSection] = useState('')
     const [showConfirmation, setShowConfirmation] = useState(false)
     const [pendingPublish, setPendingPublish] = useState(false)
@@ -62,26 +64,98 @@ export default function CreateQuizPage() {
         correctIndices: []
     })
 
+    // Duplicate detection state
+    const [warnings, setWarnings] = useState<string[]>([])
+
+    // Helper: Check for similar question text (case-insensitive, normalized)
+    const findSimilarQuestions = (text: string, excludeIndex?: number): string[] => {
+        const normalized = text.toLowerCase().trim()
+        if (normalized.length < 5) return []
+
+        return questions
+            .filter((q, i) => excludeIndex !== i)
+            .filter(q => {
+                const existing = q.text.toLowerCase().trim()
+                // Check for exact match or very similar (one contains the other)
+                return existing === normalized ||
+                    existing.includes(normalized) ||
+                    normalized.includes(existing)
+            })
+            .map(q => q.text.substring(0, 50) + (q.text.length > 50 ? '...' : ''))
+    }
+
+    // Helper: Check for duplicate options within a question
+    const findDuplicateOptions = (options: string[]): number[] => {
+        const seen = new Map<string, number>()
+        const duplicates: number[] = []
+
+        options.forEach((opt, i) => {
+            const normalized = opt.toLowerCase().trim()
+            if (normalized && seen.has(normalized)) {
+                duplicates.push(i)
+                duplicates.push(seen.get(normalized)!)
+            } else if (normalized) {
+                seen.set(normalized, i)
+            }
+        })
+
+        return [...new Set(duplicates)]
+    }
+
+    // Validate current question for duplicates
+    const validateForDuplicates = () => {
+        const newWarnings: string[] = []
+
+        // Check for similar questions
+        const similarQ = findSimilarQuestions(currentQ.text, editingIndex ?? undefined)
+        if (similarQ.length > 0) {
+            newWarnings.push(`⚠️ Similar question exists: "${similarQ[0]}"`)
+        }
+
+        // Check for duplicate options
+        const dupeOptions = findDuplicateOptions(currentQ.options)
+        if (dupeOptions.length > 0) {
+            newWarnings.push(`⚠️ Duplicate options detected at positions: ${dupeOptions.map(i => i + 1).join(', ')}`)
+        }
+
+        setWarnings(newWarnings)
+    }
+
     // Fetch faculty's assigned subjects
     useEffect(() => {
         const fetchSubjects = async () => {
             try {
                 const res = await fetch('/api/subjects/my')
                 const data = await res.json()
-                setSubjects(data)
-                if (preselectedSubject) {
-                    setSubjectId(preselectedSubject)
-                } else if (data.length > 0) {
-                    setSubjectId(data[0].id)
+                if (Array.isArray(data)) {
+                    setSubjects(data)
+                    if (preselectedSubject) {
+                        setSubjectId(preselectedSubject)
+                    } else if (data.length > 0) {
+                        setSubjectId(data[0].id)
+                    }
+                } else {
+                    console.error('Failed to fetch subjects:', data)
+                    setSubjects([])
                 }
             } catch (err) {
                 console.error(err)
+                setSubjects([])
             } finally {
                 setLoadingSubjects(false)
             }
         }
         fetchSubjects()
     }, [preselectedSubject])
+
+    // Trigger duplicate validation when question text or options change
+    useEffect(() => {
+        if (currentQ.text.length > 4 || currentQ.options.some(o => o.trim())) {
+            validateForDuplicates()
+        } else {
+            setWarnings([])
+        }
+    }, [currentQ.text, currentQ.options])
 
     const startNewQuestion = (type: QuestionType) => {
         setCurrentQ({
@@ -123,12 +197,16 @@ export default function CreateQuizPage() {
     }
 
     const addQuestion = () => {
+
+
         if (!currentQ.text.trim()) {
             setError('Enter question text')
             return
         }
 
         if (currentQ.type !== 'SHORT_ANSWER' && currentQ.type !== 'LONG_ANSWER') {
+
+
             if (currentQ.options.some(o => !o.trim())) {
                 setError('Complete all options')
                 return
@@ -184,7 +262,7 @@ export default function CreateQuizPage() {
         }
 
         // Check for unrestricted access
-        if (!force && (targetBatch === '' || targetSection === '')) {
+        if (!force && (targetYear === '' || targetSection === '')) {
             setPendingPublish(publish)
             setShowConfirmation(true)
             return
@@ -203,8 +281,10 @@ export default function CreateQuizPage() {
                     description,
                     timePerQuestion,
                     totalQuestions: questions.length,
+
                     enforcementMode,
-                    assignedBatches: targetBatch ? [targetBatch] : [], // Send as array
+
+                    assignedBatches: targetYear ? [targetYear] : [], // Send as array
                     targetSection: targetSection || null,
                     isPublished: publish,
                     questions: questions.map(q => ({
@@ -224,7 +304,7 @@ export default function CreateQuizPage() {
         }
     }
 
-    const selectedSubject = subjects.find(s => s.id === subjectId)
+    const selectedSubject = Array.isArray(subjects) ? subjects.find(s => s.id === subjectId) : null
 
     return (
         <div className="min-h-screen bg-theme">
@@ -333,8 +413,8 @@ export default function CreateQuizPage() {
                                     <div>
                                         <label className="label">Year</label>
                                         <select
-                                            value={targetBatch}
-                                            onChange={(e) => setTargetBatch(e.target.value)}
+                                            value={targetYear}
+                                            onChange={(e) => setTargetYear(e.target.value)}
                                             className="input"
                                         >
                                             <option value="">All Years</option>
@@ -614,6 +694,16 @@ export default function CreateQuizPage() {
                                         </div>
                                     )}
 
+                                    {/* Duplicate Detection Warnings */}
+                                    {warnings.length > 0 && (
+                                        <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 space-y-1">
+                                            {warnings.map((w, i) => (
+                                                <p key={i} className="text-sm text-yellow-500">{w}</p>
+                                            ))}
+                                            <p className="text-xs text-theme-muted mt-2">You can still add this question despite warnings.</p>
+                                        </div>
+                                    )}
+
                                     {error && (
                                         <p className="text-sm text-danger">{error}</p>
                                     )}
@@ -699,7 +789,7 @@ export default function CreateQuizPage() {
                                         </div>
                                         <div className="p-3 rounded-lg bg-theme-tertiary">
                                             <p className="text-xs text-theme-muted">Year</p>
-                                            <p className="font-semibold text-theme-primary">{targetBatch || 'All'}</p>
+                                            <p className="font-semibold text-theme-primary">{targetYear || 'All'}</p>
                                         </div>
                                         <div className="p-3 rounded-lg bg-theme-tertiary">
                                             <p className="text-xs text-theme-muted">Batch</p>
@@ -774,7 +864,7 @@ export default function CreateQuizPage() {
                                         You are about to publish a quiz visible to <strong>ALL</strong> students in:
                                     </p>
                                     <ul className="text-sm text-theme-primary list-disc list-inside mt-2 space-y-1 bg-theme-tertiary p-2 rounded">
-                                        {targetBatch === '' && <li>All Years</li>}
+                                        {targetYear === '' && <li>All Years</li>}
                                         {targetSection === '' && <li>All Batches</li>}
                                     </ul>
                                 </div>

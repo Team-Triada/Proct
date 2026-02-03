@@ -50,9 +50,9 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
         <DashboardLayout user={user} navigation={navigation}>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <h1 className="text-2xl font-semibold text-theme-primary">{quiz.title}</h1>
                             <span className={`badge ${quiz.isPublished ? 'badge-success' : 'badge-neutral'}`}>
                                 {quiz.isPublished ? 'Published' : 'Draft'}
@@ -60,9 +60,14 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
                         </div>
                         <p className="text-theme-muted">{quiz.subject.code} - {quiz.subject.name}</p>
                     </div>
-                    <Link href={`/faculty/quizzes/${id}/edit`} className="btn btn-primary">
-                        Edit Quiz
-                    </Link>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <Link href={`/faculty/quizzes/${id}/results`} className="btn btn-secondary justify-center">
+                            Grading & Results
+                        </Link>
+                        <Link href={`/faculty/quizzes/${id}/edit`} className="btn btn-primary justify-center">
+                            Edit Quiz
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Stats */}
@@ -116,6 +121,7 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
                                         <th>Violations</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -147,6 +153,14 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
                                             </td>
                                             <td className="text-theme-muted text-sm">
                                                 {new Date(attempt.startedAt).toLocaleDateString()}
+                                            </td>
+                                            <td>
+                                                <Link
+                                                    href={`/faculty/quizzes/${id}/grade/${attempt.id}`}
+                                                    className="btn btn-ghost btn-sm text-theme-primary"
+                                                >
+                                                    Grade
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))}

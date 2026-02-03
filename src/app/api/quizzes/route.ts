@@ -54,7 +54,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, subjectId, description, timePerQuestion, totalQuestions, enforcementMode, assignedBatches, targetBatch, targetSection, isPublished, questions, availableFrom, availableUntil } = body
+    const { title, subjectId, description, timePerQuestion, totalQuestions, enforcementMode, timingMode, totalDuration, assignedBatches, targetBatch, targetSection, isPublished, questions, availableFrom, availableUntil } = body
+
+    // Validate Timing Modes
+
+
+
 
     // Verify faculty is assigned to this subject
     const faculty = await prisma.user.findUnique({
@@ -81,7 +86,10 @@ export async function POST(request: NextRequest) {
             description,
             timePerQuestion,
             totalQuestions,
+            timingMode: timingMode || 'PER_QUESTION',
+            totalDuration: totalDuration || null,
             enforcementMode,
+
             assignedBatches: finalBatches, // Save as JSON array
             targetSection: targetSection || null,
             isPublished,

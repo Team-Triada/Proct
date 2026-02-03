@@ -37,16 +37,16 @@ async function main() {
 
     // 3. Create Students (One for each Batch)
     const students = [
-        { name: 'Student Sem1', email: 'student.sem1@college.edu', sem: 1, batch: '2025-28', section: '1' },
-        { name: 'Student Sem3', email: 'student.sem3@college.edu', sem: 3, batch: '2024-27', section: '1' },
-        { name: 'Student Sem5', email: 'student.sem5@college.edu', sem: 5, batch: '2023-26', section: '1' },
-        { name: 'Student Section2', email: 'student.sec2@college.edu', sem: 1, batch: '2025-28', section: '2' },
+        { name: 'Student Sem1', email: 'student.sem1@college.edu', sem: 1, batch: '2025-28' },
+        { name: 'Student Sem3', email: 'student.sem3@college.edu', sem: 3, batch: '2024-27' },
+        { name: 'Student Sem5', email: 'student.sem5@college.edu', sem: 5, batch: '2023-26' },
+        { name: 'Student Sem1 Batch2', email: 'student.b2@college.edu', sem: 1, batch: '2025-28' },
     ]
 
     for (const s of students) {
         await prisma.user.upsert({
             where: { email: s.email },
-            update: { semester: s.sem, batch: s.batch, section: s.section },
+            update: { semester: s.sem, batch: s.batch },
             create: {
                 email: s.email,
                 password: studentPass,
@@ -54,8 +54,7 @@ async function main() {
                 role: 'STUDENT',
                 department: 'Computer Science',
                 semester: s.sem,
-                batch: s.batch,
-                section: s.section
+                batch: s.batch
             }
         })
     }

@@ -28,6 +28,12 @@ interface AttemptPayload {
     textAnswer?: string
 }
 
+const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
 export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const router = useRouter()
     const { data: session } = useSession()
@@ -37,6 +43,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const [answers, setAnswers] = useState<Record<string, any>>({})
     const [questionOrder, setQuestionOrder] = useState<string[]>([])
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+    const [timingMode, setTimingMode] = useState<string>('PER_QUESTION') // Default
+    const [totalDuration, setTotalDuration] = useState<number | null>(null)
 
     // Restored State Variables
     const [loading, setLoading] = useState(true)
@@ -48,13 +56,15 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const [selectedIndices, setSelectedIndices] = useState<number[]>([])
     const [textAnswer, setTextAnswer] = useState<string>('')
 
-    const [timeLeft, setTimeLeft] = useState(30)
+    const [timeLeft, setTimeLeft] = useState<number | null>(null)
     const [attemptId, setAttemptId] = useState<string | null>(null)
     const [showWarning, setShowWarning] = useState(false)
     const [warningMessage, setWarningMessage] = useState('')
     const [completed, setCompleted] = useState(false)
     const [result, setResult] = useState<{ score: number; totalPoints: number } | null>(null)
     const [screenProtectionActive, setScreenProtectionActive] = useState(false)
+    const [reloadWarning, setReloadWarning] = useState<string | null>(null)
+    const timerInitialized = useRef(false)
 
     const timerRef = useRef<NodeJS.Timeout | null>(null)
     const startTimeRef = useRef<number>(Date.now())
@@ -81,11 +91,23 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
                 setAttemptId(data.attemptId)
                 setQuestionOrder(data.questionOrder)
+                setTimingMode(data.timingMode || 'PER_QUESTION')
+                setTotalDuration(data.totalDuration)
+
+                // Set timer from server (only once on init)
+                if (!timerInitialized.current) {
+                    // Handle -1 as unlimited (null)
+                    if (data.timeRemaining === -1) {
+                        setTimeLeft(null)
+                    } else {
+                        setTimeLeft(data.timeRemaining)
+                    }
+                    timerInitialized.current = true
+                }
 
                 // Resume Logic or New Start
                 if (data.resume) {
                     setCurrentQuestionIndex(data.currentIndex)
-                    setTimeLeft(data.timeRemaining)
 
                     // Map existing answers to local state
                     const answerMap: Record<string, any> = {}
@@ -97,8 +119,16 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                         }
                     })
                     setAnswers(answerMap)
-                } else {
-                    setTimeLeft(data.timeRemaining) // Total Time
+
+                    // Track reload and check for violation
+                    try {
+                        const reloadRes = await fetch(`/api/attempts/${data.attemptId}/reload`, { method: 'POST' })
+                        const reloadData = await reloadRes.json()
+                        if (reloadData.violationLogged) {
+                            setReloadWarning(reloadData.message)
+                            setTimeout(() => setReloadWarning(null), 5000)
+                        }
+                    } catch { }
                 }
 
                 setLoading(false)
@@ -150,6 +180,21 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                 }
 
                 setQuestion(data)
+
+                // Timer is preserved from init - don't reset per question
+                // Only set if not already initialized (fallback)
+                // Timer Logic based on Mode
+                if (timingMode === 'PER_QUESTION') {
+                    // Reset timer for new question
+                    if (data.type === 'SHORT_ANSWER' || data.type === 'LONG_ANSWER') {
+                        setTimeLeft(null) // Unlimited
+                    } else {
+                        setTimeLeft(data.timePerQuestion)
+                    }
+                } else if (timeLeft === null) {
+                    // Fallback for others if lost
+                    setTimeLeft(data.timePerQuestion * (questionOrder.length - currentQuestionIndex))
+                }
 
                 // Restore answer for this question from local state
                 const savedAns = answers[data.questionId]
@@ -216,6 +261,9 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         // Move to next question
         if (currentQuestionIndex < questionOrder.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1)
+            // PER_QUESTION timer reset handled in useEffect via loading new question data?
+            // Actually `timeLeft` reset is done in `loadQuestion` (Step 170 replacement).
+            // But we need to make sure we don't double decrement or something.
         } else {
             // Finish Quiz
             await forceSubmit()
@@ -225,29 +273,50 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
     // Timer Interval
     useEffect(() => {
-        if (!question || loading || completed) return
+        // Only start timer if we have a question, not loading, not completed, and time is set
+        // If timeLeft is -1, it means unlimited time, so don't start the interval
+        if (!question || loading || completed || timeLeft === null || timeLeft === -1) return
+
+        // Clear any existing interval
+        if (timerRef.current) clearInterval(timerRef.current)
 
         timerRef.current = setInterval(() => {
-            setTimeLeft((prev) => prev - 1)
+            setTimeLeft((prev) => {
+                if (prev === null || prev <= 0) {
+                    // Stop the timer when reaching 0
+                    if (timerRef.current) clearInterval(timerRef.current)
+                    return prev
+                }
+                return prev - 1
+            })
         }, 1000)
 
         return () => {
             if (timerRef.current) clearInterval(timerRef.current)
         }
-    }, [question, loading, completed])
+    }, [question, loading, completed]) // Removed timeLeft to prevent interval recreation on each tick
 
     const forceSubmit = useCallback(async () => {
         if (!attemptId) return
         try {
-            await fetch(`/api/attempts/${attemptId}/submit`, { method: 'POST' })
-            setCompleted(true)
-            router.push(`/student`)
+            const res = await fetch(`/api/attempts/${attemptId}/submit`, { method: 'POST' })
+            const data = await res.json()
+            if (data.completed) {
+                setResult({
+                    score: data.score,
+                    totalPoints: data.totalPoints
+                })
+                setCompleted(true)
+                // Remove redirect to allow viewing result
+                // router.push(`/student`) 
+            }
         } catch { }
-    }, [attemptId, router])
+    }, [attemptId])
 
     // Timer Timeout Action
     useEffect(() => {
-        if (timeLeft <= 0 && !submitting && !completed) {
+        // If timeLeft is -1, time is unlimited, so don't auto-submit
+        if (timeLeft !== null && timeLeft !== -1 && timeLeft <= 0 && !submitting && !completed) {
             forceSubmit()
         }
     }, [timeLeft, submitting, completed, forceSubmit])
@@ -518,7 +587,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
       }
       
       /* Prevent text selection globally */
-      * {
+      /* Prevent text selection globally */
+      body {
         -webkit-user-select: none !important;
         -moz-user-select: none !important;
         -ms-user-select: none !important;
@@ -532,6 +602,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         -moz-user-select: text !important;
         -ms-user-select: text !important;
         user-select: text !important;
+        cursor: text !important;
       }
       
       /* Prevent printing */
@@ -840,8 +911,10 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         )
     }
 
-    const timerPct = (timeLeft / question.timePerQuestion) * 100
-    const isLow = timeLeft <= 10
+    const timerPct = timeLeft !== null && timeLeft !== -1
+        ? (timeLeft / question.timePerQuestion) * 100
+        : 100
+    const isLow = timeLeft !== null && timeLeft <= 10
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-theme select-none quiz-protected">
@@ -884,9 +957,9 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
             </div>
 
             {/* Watermark Layer - Dense coverage */}
-            <div className="watermark-container">
+            <div className="watermark-container pointer-events-none fixed inset-0 z-50">
                 {watermarks.map((pos) => (
-                    <div key={pos.key} className="watermark-text" style={{ left: pos.left, top: pos.top }}>
+                    <div key={pos.key} className="watermark-text absolute select-none" style={{ left: pos.left, top: pos.top }}>
                         {user?.name || 'Student'} • {user?.rollNumber || 'ID'} • {new Date().toLocaleTimeString()}
                     </div>
                 ))}
@@ -928,6 +1001,26 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                 )}
             </AnimatePresence>
 
+            {/* Reload Warning Toast */}
+            <AnimatePresence>
+                {reloadWarning && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -50 }}
+                        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-lg flex items-center gap-3"
+                        style={{
+                            background: 'var(--warning)',
+                            color: 'white'
+                        }}
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span className="font-medium text-sm">{reloadWarning}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Header */}
             <header className="sticky top-0 z-40 border-b border-theme-subtle bg-theme-primary">
@@ -937,7 +1030,9 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                             {question.questionNumber} / {question.totalQuestions}
                         </span>
                         <div className={`timer ${isLow ? 'timer-warning' : ''}`}>
-                            <span className="font-mono font-semibold">{timeLeft}s</span>
+                            <span className="font-mono font-semibold">
+                                {timeLeft !== null && timeLeft !== -1 ? formatTime(timeLeft) : 'No Time Limit'}
+                            </span>
                         </div>
                     </div>
                     <div className="progress">
@@ -1049,19 +1144,31 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                         </div>
                     )}
 
-                    <button
-                        onClick={handleNext}
-                        disabled={!isAnswerProvided() || submitting}
-                        className="btn btn-primary btn-lg w-full"
-                    >
-                        {submitting ? (
-                            <div className="spinner" />
-                        ) : question.questionNumber === question.totalQuestions ? (
-                            'Submit Quiz'
-                        ) : (
-                            'Next Question'
-                        )}
-                    </button>
+                    <div className="flex justify-between items-center mt-8 gap-4">
+                        <button
+                            onClick={() => setCurrentQuestionIndex(prev => prev - 1)}
+                            disabled={currentQuestionIndex === 0 || timingMode === 'PER_QUESTION' || timingMode === 'TOTAL_DURATION'}
+                            className={`btn btn-secondary flex-1 ${currentQuestionIndex === 0 || timingMode === 'PER_QUESTION' || timingMode === 'TOTAL_DURATION'
+                                ? 'opacity-50 cursor-not-allowed'
+                                : ''
+                                }`}
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={handleNext}
+                            disabled={!isAnswerProvided() || submitting}
+                            className="btn btn-primary flex-1"
+                        >
+                            {submitting ? (
+                                <div className="spinner" />
+                            ) : question.questionNumber === question.totalQuestions ? (
+                                'Submit Quiz'
+                            ) : (
+                                'Next Question'
+                            )}
+                        </button>
+                    </div>
                 </motion.div>
             </main>
         </div>

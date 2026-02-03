@@ -59,7 +59,12 @@ export async function GET(
     }
 
     // Parse and shuffle options while tracking correct answer
-    const options = JSON.parse(question.options) as string[]
+    let options: string[] = []
+    try {
+        options = JSON.parse(question.options || '[]') as string[]
+    } catch (e) {
+        options = []
+    }
     // const correctOption = options[question.correctIndex] // Not sending correct answer to client
 
     // Create shuffled options array with indices

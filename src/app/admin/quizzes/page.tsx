@@ -47,6 +47,7 @@ export default async function AdminQuizzesPage() {
                                 <tr>
                                     <th>Title</th>
                                     <th>Faculty</th>
+                                    <th>Target</th>
                                     <th>Questions</th>
                                     <th>Attempts</th>
                                     <th>Status</th>
@@ -54,22 +55,46 @@ export default async function AdminQuizzesPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {quizzes.map((quiz) => (
-                                    <tr key={quiz.id}>
-                                        <td className="font-medium">{quiz.title}</td>
-                                        <td className="text-[var(--text-muted)]">{quiz.faculty.name}</td>
-                                        <td>{quiz._count?.questions || 0}</td>
-                                        <td>{quiz._count?.attempts || 0}</td>
-                                        <td>
-                                            <span className={`badge ${quiz.isPublished ? 'badge-success' : 'badge-neutral'}`}>
-                                                {quiz.isPublished ? 'Published' : 'Draft'}
-                                            </span>
-                                        </td>
-                                        <td className="text-[var(--text-muted)] text-sm">
-                                            {new Date(quiz.createdAt).toLocaleDateString()}
-                                        </td>
-                                    </tr>
-                                ))}
+                                {quizzes.map((quiz) => {
+                                    const yearBatches = (quiz.assignedBatches as string[] | null) || []
+                                    const targetBatch = quiz.targetSection
+                                    const hasRestrictions = yearBatches.length > 0 || targetBatch
+
+                                    return (
+                                        <tr key={quiz.id}>
+                                            <td className="font-medium">{quiz.title}</td>
+                                            <td className="text-[var(--text-muted)]">{quiz.faculty.name}</td>
+                                            <td>
+                                                {hasRestrictions ? (
+                                                    <div className="flex flex-col gap-1">
+                                                        {yearBatches.length > 0 && (
+                                                            <span className="badge badge-neutral text-xs">
+                                                                Year: {yearBatches.join(', ')}
+                                                            </span>
+                                                        )}
+                                                        {targetBatch && (
+                                                            <span className="badge badge-primary text-xs">
+                                                                Batch {targetBatch}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[var(--text-muted)] text-sm">All</span>
+                                                )}
+                                            </td>
+                                            <td>{quiz._count?.questions || 0}</td>
+                                            <td>{quiz._count?.attempts || 0}</td>
+                                            <td>
+                                                <span className={`badge ${quiz.isPublished ? 'badge-success' : 'badge-neutral'}`}>
+                                                    {quiz.isPublished ? 'Published' : 'Draft'}
+                                                </span>
+                                            </td>
+                                            <td className="text-[var(--text-muted)] text-sm">
+                                                {new Date(quiz.createdAt).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </div>

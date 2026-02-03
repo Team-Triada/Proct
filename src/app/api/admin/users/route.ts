@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json()
-        const { email, password, name, role, department, semester, batch, section, rollNumber } = body
+        const { email, password, name, role, department, semester, batch, rollNumber } = body
 
         if (!email || !password || !name || !role) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -34,7 +34,6 @@ export async function POST(request: Request) {
                 department: department || null,
                 semester: semester ? parseInt(semester) : null,
                 batch: batch || null,
-                section: section || null,
                 rollNumber: rollNumber || null,
             }
         })
