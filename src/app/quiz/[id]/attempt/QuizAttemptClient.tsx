@@ -554,21 +554,34 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         if (!attemptId || completed) return
 
         const preventSelection = (e: Event) => {
+            const target = e.target as HTMLElement
+            // Allow selection in inputs and textareas
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+                return
+            }
             e.preventDefault()
             if (window.getSelection) {
                 window.getSelection()?.removeAllRanges()
             }
         }
 
-        document.addEventListener('selectstart', preventSelection, true)
-        document.addEventListener('selectionchange', () => {
+        const handleSelectionChange = () => {
+            const activeElement = document.activeElement
+            // If user is typing in an input, don't clear selection (cursor)
+            if (activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA') {
+                return
+            }
             if (window.getSelection) {
                 window.getSelection()?.removeAllRanges()
             }
-        })
+        }
+
+        document.addEventListener('selectstart', preventSelection, true)
+        document.addEventListener('selectionchange', handleSelectionChange, true)
 
         return () => {
             document.removeEventListener('selectstart', preventSelection, true)
+            document.removeEventListener('selectionchange', handleSelectionChange, true)
         }
     }, [attemptId, completed])
 
@@ -603,6 +616,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         -ms-user-select: text !important;
         user-select: text !important;
         cursor: text !important;
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
       }
       
       /* Prevent printing */
@@ -656,8 +671,20 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
             const widthDiff = Math.abs(window.innerWidth - originalWidth)
             const heightDiff = Math.abs(window.innerHeight - originalHeight)
 
-            if (widthDiff > 200 || heightDiff > 200) {
-                logViolation('WINDOW_RESIZE')
+            // Check if mobile (keyboard opens -> height changes, width stays same)
+            const isMobile = window.innerWidth < 768 || 'ontouchstart' in window
+
+            if (isMobile) {
+                // On mobile, only care if WIDTH changes (split screen, rotation)
+                // Ignore height changes (keyboard)
+                if (widthDiff > 100) {
+                    logViolation('WINDOW_RESIZE')
+                }
+            } else {
+                // Desktop: Strict check
+                if (widthDiff > 200 || heightDiff > 200) {
+                    logViolation('WINDOW_RESIZE')
+                }
             }
         }
 
