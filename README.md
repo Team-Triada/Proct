@@ -65,11 +65,7 @@ Proct is a modern quiz platform built for educational institutions that prioriti
 - 📋 Copy/paste prevention
 - 🔒 Question randomization
 - ⚠️ Violation logging
-- � Tab switch detection
-- 📋 Copy/paste prevention
-- 🔒 Question randomization
-- ⚠️ Violation logging
-- �🛑 Auto-submit on violations
+- 🛑 Auto-submit on violations
 
 ### Security & Management
 - 🔐 **Enhanced Registration**: Strict email domain (`@yenepoya.edu.in`), Campus ID, and password policy enforcement.
@@ -251,9 +247,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👥 Team Triada
-
-Built with ❤️ by Team Triada
+## Team Triada
+Made by Team Triada
 
 ---
 
