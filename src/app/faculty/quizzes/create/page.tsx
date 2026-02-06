@@ -782,11 +782,7 @@ export default function CreateQuizPage() {
                                 {/* Targeting Info */}
                                 <div className="pt-4 border-t border-theme-subtle">
                                     <p className="text-xs text-theme-muted uppercase tracking-wide mb-3">Target Audience</p>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="p-3 rounded-lg bg-theme-tertiary">
-                                            <p className="text-xs text-theme-muted">Semester</p>
-                                            <p className="font-semibold text-theme-primary">{selectedSubject?.semester || '-'}</p>
-                                        </div>
+                                    <div className="grid grid-cols-2 gap-3">
                                         <div className="p-3 rounded-lg bg-theme-tertiary">
                                             <p className="text-xs text-theme-muted">Year</p>
                                             <p className="font-semibold text-theme-primary">{targetYear || 'All'}</p>

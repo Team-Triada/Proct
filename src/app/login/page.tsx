@@ -50,15 +50,7 @@ export default function LoginPage() {
         }
     }
 
-    const fillDemo = (type: 'admin' | 'faculty' | 'student') => {
-        const creds = {
-            admin: { email: 'admin@college.edu', password: 'admin123' },
-            faculty: { email: 'prof.kumar@college.edu', password: 'faculty123' },
-            student: { email: 'rahul@college.edu', password: 'student123' }
-        }
-        setEmail(creds[type].email)
-        setPassword(creds[type].password)
-    }
+
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300"
@@ -230,31 +222,20 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    {/* Quick Demo Access */}
-                    <div className="mt-8 pt-6" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                        <p className="text-xs text-center mb-4" style={{ color: 'var(--text-muted)' }}>
-                            Quick demo access
+
+
+                    {/* Register Link */}
+                    <div className="mt-6 text-center">
+                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                            Don&apos;t have an account?{' '}
+                            <Link href="/register" className="font-medium transition-colors hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                                Register
+                            </Link>
                         </p>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['admin', 'faculty', 'student'] as const).map((type) => (
-                                <button
-                                    key={type}
-                                    onClick={() => fillDemo(type)}
-                                    className="py-2.5 px-3 rounded-xl text-xs font-medium transition-all hover:scale-105"
-                                    style={{
-                                        background: 'var(--bg-tertiary)',
-                                        border: '1px solid var(--border)',
-                                        color: 'var(--text-secondary)'
-                                    }}
-                                >
-                                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                                </button>
-                            ))}
-                        </div>
                     </div>
 
                     {/* Terms & Privacy */}
-                    <div className="mt-6 text-center">
+                    <div className="mt-4 text-center">
                         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                             By signing in, you agree to our{' '}
                             <Link href="/terms" className="transition-colors hover:opacity-80" style={{ color: 'var(--accent)' }}>

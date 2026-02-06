@@ -132,7 +132,7 @@ export default function DocsPage() {
                                 />
                                 <FeatureCard
                                     title="Subject Approval System"
-                                    desc="Faculty can propose new subjects (e.g., 'Advanced AI'), but they remain pending until an Admin globally approves them. This prevents duplicate subjects."
+                                    desc="Faculty can create new subjects (e.g., 'Advanced AI') and create quizzes."
                                     icon={<CheckCircle />}
                                 />
                             </div>

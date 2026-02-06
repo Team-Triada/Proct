@@ -9,6 +9,7 @@ import Link from 'next/link'
 const navigation = [
     { name: 'Overview', href: '/faculty' },
     { name: 'My Quizzes', href: '/faculty/quizzes' },
+    { name: 'Students', href: '/faculty/students' },
     { name: 'Create Quiz', href: '/faculty/quizzes/create' },
 ]
 

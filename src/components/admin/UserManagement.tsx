@@ -20,6 +20,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
     const [users, setUsers] = useState(initialUsers)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
+    const [deletingUser, setDeletingUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(false)
 
     // Form State
@@ -108,16 +109,28 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
         }
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this user?')) return
+    const handleDeleteClick = (user: User) => {
+        setDeletingUser(user)
+    }
+
+    const confirmDelete = async () => {
+        if (!deletingUser) return
+        setLoading(true)
         try {
-            const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
+            const res = await fetch(`/api/admin/users/${deletingUser.id}`, { method: 'DELETE' })
             if (res.ok) {
-                setUsers(users.filter(u => u.id !== id))
+                setUsers(users.filter(u => u.id !== deletingUser.id))
                 router.refresh()
+                setDeletingUser(null)
+            } else {
+                const data = await res.json()
+                alert(data.error || 'Failed to delete user')
             }
         } catch (error) {
             console.error(error)
+            alert('Error deleting user')
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -173,7 +186,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 </td>
                                 <td className="py-3 text-right pr-2">
                                     <button onClick={() => openEdit(u)} className="btn btn-ghost btn-sm mr-2">Edit</button>
-                                    <button onClick={() => handleDelete(u.id)} className="btn btn-danger btn-sm">Delete</button>
+                                    <button onClick={() => handleDeleteClick(u)} className="btn btn-danger btn-sm">Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -256,6 +269,65 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 <button type="submit" disabled={loading} className="btn btn-primary flex-1">{loading ? 'Saving...' : 'Save User'}</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Delete Warning Modal */}
+            {deletingUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="card w-full max-w-md bg-theme-surface border-danger/30 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-4 text-danger">
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <h2 className="text-xl font-bold">Warning: Irreversible Action</h2>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <p className="text-theme-secondary">
+                                You are about to delete user <span className="font-bold text-theme-primary">{deletingUser.name}</span>.
+                            </p>
+
+                            <div className="bg-danger/10 border border-danger/20 p-3 rounded-lg text-sm text-danger-content">
+                                <p className="font-semibold mb-1">This will permanently delete:</p>
+                                <ul className="list-disc pl-4 space-y-1">
+                                    {deletingUser.role === 'FACULTY' ? (
+                                        <>
+                                            <li>All quizzes created by this faculty</li>
+                                            <li>questions, attempts, and grades for those quizzes</li>
+                                            <li>Subject assignments</li>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <li>All quiz attempts and grades</li>
+                                            <li>Verification logs and answers</li>
+                                        </>
+                                    )}
+                                    <li>User account and profile data</li>
+                                </ul>
+                            </div>
+
+                            <p className="text-sm font-medium text-theme-secondary">
+                                This action cannot be undone. Are you sure you want to proceed?
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setDeletingUser(null)}
+                                className="btn btn-ghost"
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="btn btn-danger"
+                                disabled={loading}
+                            >
+                                {loading ? 'Deleting...' : 'Yes, Delete User'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
