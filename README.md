@@ -65,7 +65,16 @@ Proct is a modern quiz platform built for educational institutions that prioriti
 - 📋 Copy/paste prevention
 - 🔒 Question randomization
 - ⚠️ Violation logging
-- 🛑 Auto-submit on violations
+- � Tab switch detection
+- 📋 Copy/paste prevention
+- 🔒 Question randomization
+- ⚠️ Violation logging
+- �🛑 Auto-submit on violations
+
+### Security & Management
+- 🔐 **Enhanced Registration**: Strict email domain (`@yenepoya.edu.in`), Campus ID, and password policy enforcement.
+- 🗑️ **Robust Deletion**: Safe cascade deletion for users, ensuring all related attempts and data are cleaned up without errors.
+- ⚠️ **Action Warnings**: Confirmation modals for critical actions like deletion.
 
 ---
 
@@ -110,7 +119,7 @@ npx prisma generate
 # Run database migrations
 npx prisma migrate deploy
 
-# (Optional) Seed demo data
+# (Optional) Seed admin account
 npx prisma db seed
 
 # Start development server
@@ -134,23 +143,24 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ## 📖 Usage
 
-### Demo Accounts
+### Initial Access
+1. **Admin Login**:
+   - Email: `admin@college.edu`
+   - Password: `admin123`
 
-After seeding, use these demo accounts:
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@college.edu | admin123 |
-| Faculty | faculty@college.edu | faculty123 |
-| Student | student@college.edu | student123 |
+2. **Faculty/Student Access**:
+   - Users must register via the **Registration Page**.
+   - **Requirements**:
+     - Email must be `@yenepoya.edu.in`.
+     - 5-digit Campus ID.
+     - Strong password (8+ chars, upper, lower, number, special).
 
 ### Creating a Quiz
-
 1. Login as Faculty
 2. Navigate to **Create Quiz**
 3. Select subject and add questions
 4. Set time per question and enforcement mode
-5. Target specific Year/Batch (optional)
+5. **Targeting**: Assign to specific Years (e.g., 2024-27) or Batches (e.g., Batch 1).
 6. Publish when ready
 
 ### Taking a Quiz
