@@ -92,44 +92,46 @@ export async function POST(
 
     if (existingAttempt) {
         if (existingAttempt.status === 'IN_PROGRESS') {
-            // Calculate remaining time server-side based on MODE
-            const now = new Date()
+            // Calculate remaining time using timeSpent (NOT wall-clock)
+            // This ensures logout duration doesn't count against the student
             let remainingSeconds = 0
 
             if (quiz.timingMode === 'PER_QUESTION') {
                 const questionOrder = JSON.parse(existingAttempt.questionOrder) as string[]
-                const currentData = existingAttempt
-                const currentQId = questionOrder[currentData.currentIndex]
+                const currentQId = questionOrder[existingAttempt.currentIndex]
                 const currentQ = quiz.questions.find(q => q.id === currentQId)
 
                 if (currentQ && (currentQ.type === 'SHORT_ANSWER' || currentQ.type === 'LONG_ANSWER')) {
                     remainingSeconds = -1 // Unlimited
                 } else {
-                    const elapsed = Math.floor((now.getTime() - new Date(existingAttempt.currentQuestionStartTime).getTime()) / 1000)
-                    remainingSeconds = Math.max(0, quiz.timePerQuestion - elapsed)
+                    // Use timeSpent (accumulated active seconds) instead of wall-clock
+                    remainingSeconds = Math.max(0, quiz.timePerQuestion - existingAttempt.timeSpent)
                 }
-
-                // If expired for this question, we should theoretically move to next, but let's just return 0
-                // and let the client call 'submit' to move forward.
             } else if (quiz.timingMode === 'TOTAL_DURATION' && quiz.totalDuration) {
-                const elapsed = Math.floor((now.getTime() - new Date(existingAttempt.startedAt).getTime()) / 1000)
-                remainingSeconds = Math.max(0, (quiz.totalDuration * 60) - elapsed)
+                // Use timeSpent instead of wall-clock elapsed
+                remainingSeconds = Math.max(0, (quiz.totalDuration * 60) - existingAttempt.timeSpent)
             } else if (quiz.timingMode === 'NO_TIME_LIMIT') {
-                // Return seconds until due date
                 if (quiz.availableUntil) {
+                    const now = new Date()
                     remainingSeconds = Math.floor((new Date(quiz.availableUntil).getTime() - now.getTime()) / 1000)
                 } else {
-                    remainingSeconds = 999999 // Unlimited effectively
+                    remainingSeconds = 999999
                 }
             } else {
-                // Fallback (legacy or default)
-                const elapsed = Math.floor((now.getTime() - new Date(existingAttempt.startedAt).getTime()) / 1000)
-                remainingSeconds = (quiz.totalQuestions * quiz.timePerQuestion) - elapsed
+                // Fallback: use timeSpent instead of wall-clock
+                remainingSeconds = Math.max(0, (quiz.totalQuestions * quiz.timePerQuestion) - existingAttempt.timeSpent)
             }
 
-            // If time expired (Global or Per-Question), we don't auto-submit here immediately for Per-Q
-            // ensuring client has a chance to sync. But for Global, if 0, we could auto-submit.
-            // For now, let's return the state and let client handle "0 remaining".
+            // Reset currentQuestionStartTime to NOW on resume
+            // This way, the next save will calculate elapsed = now - resumeTime
+            // and add it to the existing timeSpent
+            await prisma.quizAttempt.update({
+                where: { id: existingAttempt.id },
+                data: {
+                    currentQuestionStartTime: new Date(),
+                    lastActivityAt: new Date()
+                }
+            })
 
             // Return Resume State
             return NextResponse.json({

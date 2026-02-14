@@ -95,6 +95,7 @@ model QuizAttempt {
   totalPoints     Int           @default(0)
   violationCount  Int           @default(0)
   reloadCount     Int           @default(0)
+  timeSpent       Int           @default(0) // Accumulated active seconds on current question/quiz
   startedAt       DateTime      @default(now())
   lastActivityAt           DateTime      @default(now())
   currentQuestionStartTime DateTime      @default(now())

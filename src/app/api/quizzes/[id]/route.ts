@@ -26,8 +26,10 @@ export async function GET(
                 select: {
                     id: true,
                     text: true,
+                    type: true,
                     options: true,
                     correctIndex: true, // Will filter this out for students below
+                    correctIndices: true, // Will filter this out for students below
                     order: true,
                     points: true
                 }
@@ -130,21 +132,80 @@ export async function PUT(
 
     // If questions are provided, update them
     if (questions && Array.isArray(questions)) {
-        // Delete existing questions and create new ones (simpler than diffing)
-        await prisma.question.deleteMany({ where: { quizId: id } })
+        // Get existing questions to determine what to preserve
+        const existingQuestions = await prisma.question.findMany({
+            where: { quizId: id },
+            select: { id: true, options: true }
+        })
+        const existingMap = new Map(existingQuestions.map(q => [q.id, q.options]))
+        const existingIds = existingQuestions.map(q => q.id)
 
-        await prisma.question.createMany({
-            data: questions.map((q: any, index: number) => ({
-                quizId: id,
+        // Identify which IDs are present in the new payload
+        const payloadIds = questions
+            .filter((q: any) => q.id)
+            .map((q: any) => q.id)
+
+        // Delete questions that are no longer in the payload
+        const toDelete = existingIds.filter(eid => !payloadIds.includes(eid))
+        if (toDelete.length > 0) {
+            // Must delete answers referencing these questions first (FK constraint)
+            await prisma.answer.deleteMany({
+                where: { questionId: { in: toDelete } }
+            })
+            await prisma.question.deleteMany({
+                where: { id: { in: toDelete } }
+            })
+        }
+
+        // Upsert each question
+        for (let index = 0; index < questions.length; index++) {
+            const q = questions[index] as any
+
+            // Determine options string with preservation logic
+            let optionsStr: string
+
+            // Check if options has actual content (not just empty strings)
+            const hasValidOptions = Array.isArray(q.options) &&
+                q.options.length > 0 &&
+                q.options.some((opt: string) => opt && opt.trim() !== '')
+
+            if (typeof q.options === 'string' && q.options.length > 2) {
+                // Already a JSON string with content (not just "[]")
+                optionsStr = q.options
+            } else if (hasValidOptions) {
+                optionsStr = JSON.stringify(q.options)
+            } else {
+                // Options is undefined, null, empty array, or array of empty strings
+                // For existing questions, preserve their current options
+                if (q.id && existingMap.has(q.id)) {
+                    optionsStr = existingMap.get(q.id) || '[]'
+                } else {
+                    // New question with no options
+                    optionsStr = '[]'
+                }
+            }
+
+            const questionData = {
                 text: q.text,
                 type: q.type || 'MULTIPLE_CHOICE',
-                options: JSON.stringify(q.options),
+                options: optionsStr,
                 correctIndex: q.correctIndex,
-                correctIndices: JSON.stringify(q.correctIndices || []),
+                correctIndices: typeof q.correctIndices === 'string' ? q.correctIndices : JSON.stringify(q.correctIndices || []),
                 order: index + 1,
                 points: q.points || 1
-            }))
-        })
+            }
+
+            if (q.id && existingIds.includes(q.id)) {
+                await prisma.question.update({
+                    where: { id: q.id },
+                    data: questionData
+                })
+            } else {
+                await prisma.question.create({
+                    data: { ...questionData, quizId: id }
+                })
+            }
+        }
     }
 
     return NextResponse.json({ success: true, quiz: updatedQuiz })

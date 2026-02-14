@@ -70,6 +70,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const startTimeRef = useRef<number>(Date.now())
     const violationCountRef = useRef(0)
     const lastViolationTimeRef = useRef(0)
+    const timerExpiredHandled = useRef(false) // Prevent double-trigger on timer expiry
 
     // Init Quiz (Start/Resume)
     useEffect(() => {
@@ -260,6 +261,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
         // Move to next question
         if (currentQuestionIndex < questionOrder.length - 1) {
+            timerInitialized.current = false // Allow timer reset for new question
+            timerExpiredHandled.current = false // Reset timer expiry guard for next question
             setCurrentQuestionIndex(prev => prev + 1)
             // PER_QUESTION timer reset handled in useEffect via loading new question data?
             // Actually `timeLeft` reset is done in `loadQuestion` (Step 170 replacement).
@@ -317,9 +320,19 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     useEffect(() => {
         // If timeLeft is -1, time is unlimited, so don't auto-submit
         if (timeLeft !== null && timeLeft !== -1 && timeLeft <= 0 && !submitting && !completed) {
-            forceSubmit()
+            // Check guard to prevent double-trigger
+            if (timerExpiredHandled.current) return
+            timerExpiredHandled.current = true
+
+            if (timingMode === 'PER_QUESTION') {
+                // For per-question timing, move to next question instead of submitting whole quiz
+                handleNext()
+            } else {
+                // For total duration, submit the quiz
+                forceSubmit()
+            }
         }
-    }, [timeLeft, submitting, completed, forceSubmit])
+    }, [timeLeft, submitting, completed, forceSubmit, timingMode, handleNext])
 
     // Rate-limited violation logging
     const logViolation = useCallback(async (type: string) => {
