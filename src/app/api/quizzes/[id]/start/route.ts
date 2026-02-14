@@ -125,13 +125,23 @@ export async function POST(
             // Reset currentQuestionStartTime to NOW on resume
             // This way, the next save will calculate elapsed = now - resumeTime
             // and add it to the existing timeSpent
-            await prisma.quizAttempt.update({
-                where: { id: existingAttempt.id },
-                data: {
-                    currentQuestionStartTime: new Date(),
-                    lastActivityAt: new Date()
+            // Retry loop: concurrent /reload may modify the record between our read and update
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    await prisma.quizAttempt.update({
+                        where: { id: existingAttempt.id },
+                        data: {
+                            currentQuestionStartTime: new Date(),
+                            lastActivityAt: new Date()
+                        }
+                    })
+                    break // Success
+                } catch (e: any) {
+                    if (attempt === 2) throw e // Final retry failed
+                    // Otherwise retry after brief delay
+                    await new Promise(r => setTimeout(r, 50))
                 }
-            })
+            }
 
             // Return Resume State
             return NextResponse.json({
