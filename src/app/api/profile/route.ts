@@ -58,6 +58,20 @@ export async function PUT(request: Request) {
     }
 
     try {
+        // Get current user to check role
+        const currentUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { role: true }
+        })
+
+        // Students cannot edit their profile at all - only admin/faculty can
+        if (currentUser?.role === 'STUDENT') {
+            return NextResponse.json({
+                error: 'Students cannot edit their profile. Please contact admin or faculty for changes.'
+            }, { status: 403 })
+        }
+
+        // Only admin/faculty can update profile
         const updatedUser = await prisma.user.update({
             where: { id: user.id },
             data: {

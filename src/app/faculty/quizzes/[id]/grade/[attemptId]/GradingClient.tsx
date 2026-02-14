@@ -60,12 +60,17 @@ export default function GradingClient({
     })
     const [saving, setSaving] = useState(false)
 
-    const handleGradeChange = (questionId: string, field: 'points' | 'feedback', value: any) => {
+    const handleGradeChange = (questionId: string, field: 'points' | 'feedback', value: any, maxPoints?: number) => {
+        let finalValue = value
+        if (field === 'points' && maxPoints !== undefined) {
+            // Clamp the value between 0 and maxPoints
+            finalValue = Math.min(Math.max(0, Number(value) || 0), maxPoints)
+        }
         setGrades(prev => ({
             ...prev,
             [questionId]: {
                 ...prev[questionId] || { questionId, points: 0, feedback: '' },
-                [field]: value
+                [field]: finalValue
             }
         }))
     }
@@ -143,7 +148,7 @@ export default function GradingClient({
                                             min="0"
                                             max={question.points}
                                             value={grade.points}
-                                            onChange={(e) => handleGradeChange(question.id, 'points', Number(e.target.value))}
+                                            onChange={(e) => handleGradeChange(question.id, 'points', Number(e.target.value), question.points)}
                                             className="input input-sm w-20 text-right font-mono"
                                         />
                                         <span className="text-theme-muted">/ {question.points}</span>

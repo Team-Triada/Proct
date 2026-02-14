@@ -175,17 +175,25 @@ export default function ProfilePage() {
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="card p-6 space-y-6">
-                            <h3 className="text-lg font-medium border-b border-theme-subtle pb-4">Personal Information</h3>
+                            <div className="flex items-center justify-between border-b border-theme-subtle pb-4">
+                                <h3 className="text-lg font-medium">Personal Information</h3>
+                                {formData.role === 'STUDENT' && (
+                                    <span className="text-xs text-theme-muted bg-theme-tertiary px-3 py-1 rounded-full">
+                                        Read Only - Contact admin/faculty to make changes
+                                    </span>
+                                )}
+                            </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="label">Full Name *</label>
+                                    <label className="label">Full Name</label>
                                     <input
                                         type="text"
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
-                                        className="input"
+                                        className={`input ${formData.role === 'STUDENT' ? 'opacity-60' : ''}`}
+                                        disabled={formData.role === 'STUDENT'}
                                         required
                                     />
                                 </div>
@@ -198,7 +206,6 @@ export default function ProfilePage() {
                                         className="input opacity-60"
                                         disabled
                                     />
-                                    <p className="text-xs text-theme-muted mt-1">Email cannot be changed</p>
                                 </div>
 
                                 <div>
@@ -208,8 +215,9 @@ export default function ProfilePage() {
                                         name="rollNumber"
                                         value={formData.rollNumber || ''}
                                         onChange={handleChange}
-                                        className="input"
+                                        className={`input ${formData.role === 'STUDENT' ? 'opacity-60' : ''}`}
                                         placeholder="e.g. REG2024001"
+                                        disabled={formData.role === 'STUDENT'}
                                     />
                                 </div>
 
@@ -220,8 +228,9 @@ export default function ProfilePage() {
                                         name="campusId"
                                         value={formData.campusId || ''}
                                         onChange={handleChange}
-                                        className="input"
+                                        className={`input ${formData.role === 'STUDENT' ? 'opacity-60' : ''}`}
                                         placeholder="e.g. BLR-123"
+                                        disabled={formData.role === 'STUDENT'}
                                     />
                                 </div>
 
@@ -231,7 +240,8 @@ export default function ProfilePage() {
                                         name="semester"
                                         value={formData.semester || ''}
                                         onChange={handleChange}
-                                        className="input"
+                                        className={`input ${formData.role === 'STUDENT' ? 'opacity-60' : ''}`}
+                                        disabled={formData.role === 'STUDENT'}
                                     >
                                         <option value="">Select Semester</option>
                                         {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
@@ -242,33 +252,28 @@ export default function ProfilePage() {
 
                                 <div>
                                     <label className="label">Year</label>
-                                    <select
+                                    <input
+                                        type="text"
                                         name="batch"
                                         value={formData.batch || ''}
                                         onChange={handleChange}
-                                        className="input"
-                                    >
-                                        <option value="">Select Year</option>
-                                        <option value="2023-26">2023-26</option>
-                                        <option value="2024-27">2024-27</option>
-                                        <option value="2025-28">2025-28</option>
-                                        <option value="2026-29">2026-29</option>
-                                    </select>
+                                        className={`input ${formData.role === 'STUDENT' ? 'opacity-60' : ''}`}
+                                        placeholder="e.g. 2023-2026"
+                                        disabled={formData.role === 'STUDENT'}
+                                    />
                                 </div>
 
                                 <div>
                                     <label className="label">Batch</label>
-                                    <select
+                                    <input
+                                        type="text"
                                         name="section"
                                         value={formData.section || ''}
                                         onChange={handleChange}
-                                        className="input"
-                                    >
-                                        <option value="">Select Batch</option>
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
-                                            <option key={n} value={String(n)}>Batch {n}</option>
-                                        ))}
-                                    </select>
+                                        className={`input ${formData.role === 'STUDENT' ? 'opacity-60' : ''}`}
+                                        placeholder="e.g. 1, 2, 3..."
+                                        disabled={formData.role === 'STUDENT'}
+                                    />
                                 </div>
 
                                 <div>
@@ -278,8 +283,9 @@ export default function ProfilePage() {
                                         name="department"
                                         value={formData.department || ''}
                                         onChange={handleChange}
-                                        className="input"
+                                        className={`input ${formData.role === 'STUDENT' ? 'opacity-60' : ''}`}
                                         placeholder="e.g. Computer Science"
+                                        disabled={formData.role === 'STUDENT'}
                                     />
                                 </div>
 
@@ -290,8 +296,9 @@ export default function ProfilePage() {
                                         name="image"
                                         value={formData.image || ''}
                                         onChange={handleChange}
-                                        className="input"
+                                        className={`input ${formData.role === 'STUDENT' ? 'opacity-60' : ''}`}
                                         placeholder="https://example.com/photo.jpg"
+                                        disabled={formData.role === 'STUDENT'}
                                     />
                                 </div>
                             </div>
@@ -303,22 +310,24 @@ export default function ProfilePage() {
                                 onClick={() => router.back()}
                                 className="btn btn-secondary"
                             >
-                                Cancel
+                                {formData.role === 'STUDENT' ? 'Back' : 'Cancel'}
                             </button>
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="btn btn-primary"
-                            >
-                                {saving ? (
-                                    <>
-                                        <div className="spinner" />
-                                        Saving...
-                                    </>
-                                ) : (
-                                    'Save Changes'
-                                )}
-                            </button>
+                            {formData.role !== 'STUDENT' && (
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="btn btn-primary"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <div className="spinner" />
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        'Save Changes'
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </form>
                 </motion.div>

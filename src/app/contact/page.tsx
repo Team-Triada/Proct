@@ -33,7 +33,7 @@ export default function ContactPage() {
                             <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Contact Sales</p>
                             <a href="mailto:sales@proct.platform" className="text-lg font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors flex items-center gap-2">
                                 <Mail size={18} />
-                                sales@proct.platform
+                                triadactf@gmail.com
                             </a>
                         </div>
                     </div>
@@ -52,14 +52,14 @@ export default function ContactPage() {
                             <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Get in Touch</p>
                             <a href="mailto:contact@proct.platform" className="text-lg font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors flex items-center gap-2">
                                 <MessageSquare size={18} />
-                                contact@proct.platform
+                                triadactf@gmail.com
                             </a>
                         </div>
                     </div>
                 </div>
 
                 <div className="text-center opacity-50">
-                    <p className="text-sm text-[var(--text-muted)]">📍 Organization: Proct by Triada</p>
+                    <p className="text-sm text-[var(--text-muted)]">Organization: Proct by Triada</p>
                 </div>
 
             </main>

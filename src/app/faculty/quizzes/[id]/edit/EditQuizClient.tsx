@@ -36,6 +36,8 @@ interface Quiz {
     isPublished: boolean
     questions: Question[]
     _count?: { attempts: number }
+    targetSection: string | null
+    assignedBatches: string[] | null
 }
 
 const questionTypes = [
@@ -109,6 +111,8 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                     timePerQuestion: quiz.timePerQuestion,
                     enforcementMode: quiz.enforcementMode,
                     isPublished: quiz.isPublished,
+                    targetSection: quiz.targetSection,
+                    assignedBatches: quiz.assignedBatches || [],
                     questions: questions.map((q) => ({
                         text: q.text,
                         type: q.type,
@@ -312,6 +316,39 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="label">Year</label>
+                            <select
+                                value={(quiz.assignedBatches && quiz.assignedBatches[0]) || ''}
+                                onChange={(e) => updateQuiz({ assignedBatches: e.target.value ? [e.target.value] : [] })}
+                                className="input"
+                            >
+                                <option value="">All Years</option>
+                                <option value="2023-26">2023-26</option>
+                                <option value="2024-27">2024-27</option>
+                                <option value="2025-28">2025-28</option>
+                                <option value="2026-29">2026-29</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="label">Batch</label>
+                            <select
+                                value={quiz.targetSection || ''}
+                                onChange={(e) => updateQuiz({ targetSection: e.target.value || null })}
+                                className="input"
+                            >
+                                <option value="">All Batches</option>
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                                    <option key={n} value={String(n)}>Batch {n}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <p className="text-xs text-theme-muted">
+                        Leave as &quot;All&quot; to allow everyone. Be careful with unrestricted quizzes.
+                    </p>
+
                     <div>
                         <label className="label">Description</label>
                         <textarea
@@ -433,8 +470,8 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                                                 type="button"
                                                                 onClick={() => toggleCorrectIndex(index, optIdx)}
                                                                 className={`option-letter ${q.type === 'CHECKBOX'
-                                                                        ? (q.correctIndices?.includes(optIdx) ? 'selected' : '')
-                                                                        : (q.correctIndex === optIdx ? 'selected' : '')
+                                                                    ? (q.correctIndices?.includes(optIdx) ? 'selected' : '')
+                                                                    : (q.correctIndex === optIdx ? 'selected' : '')
                                                                     }`}
                                                             >
                                                                 {q.type === 'CHECKBOX'
