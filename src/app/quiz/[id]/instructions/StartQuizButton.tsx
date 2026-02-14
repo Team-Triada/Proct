@@ -16,8 +16,26 @@ export default function StartQuizButton({
     const [loading, setLoading] = useState(false)
     const [agreed, setAgreed] = useState(false)
 
+    const enterFullscreen = async () => {
+        try {
+            const el = document.documentElement
+            if (el.requestFullscreen) {
+                await el.requestFullscreen()
+            } else if ((el as any).webkitRequestFullscreen) {
+                await (el as any).webkitRequestFullscreen()
+            } else if ((el as any).msRequestFullscreen) {
+                await (el as any).msRequestFullscreen()
+            }
+        } catch (e) {
+            console.warn('Fullscreen request failed:', e)
+        }
+    }
+
     const handleStart = async () => {
         setLoading(true)
+
+        // Enter fullscreen before starting quiz
+        await enterFullscreen()
 
         if (existingAttemptId) {
             router.push(`/quiz/${quizId}/attempt`)
@@ -58,7 +76,7 @@ export default function StartQuizButton({
                     </Checkbox.Indicator>
                 </Checkbox.Root>
                 <span className="text-xs text-[var(--text-muted)]">
-                    I agree to follow the quiz rules
+                    I agree to follow the quiz rules. The quiz will open in fullscreen mode.
                 </span>
             </label>
 

@@ -28,6 +28,8 @@ export async function POST(
             currentIndex: true,
             currentQuestionStartTime: true,
             startedAt: true,
+            timeSpent: true,
+            questionOrder: true,
             quiz: true // Fetch full quiz details for timing rules
         }
     })
@@ -156,11 +158,17 @@ export async function POST(
         create: answerData
     })
 
-    // Update Attempt Progress
     // Prepare Attempt Update Data
+    // Calculate elapsed time since last checkpoint (currentQuestionStartTime)
+    const elapsedSinceCheckpoint = Math.floor((now.getTime() - new Date(attempt.currentQuestionStartTime).getTime()) / 1000)
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {
-        lastActivityAt: new Date()
+        lastActivityAt: new Date(),
+        // Accumulate active time
+        timeSpent: attempt.timeSpent + elapsedSinceCheckpoint,
+        // Reset checkpoint so next save doesn't double-count
+        currentQuestionStartTime: new Date()
     }
 
     if (currentQuestionIndex !== undefined) {
@@ -171,6 +179,7 @@ export async function POST(
             // PER_QUESTION: Reset timer for NEXT question
             if (attempt.quiz.timingMode === 'PER_QUESTION') {
                 updateData.currentQuestionStartTime = new Date()
+                updateData.timeSpent = 0 // Reset accumulator for new question
             }
         }
     }

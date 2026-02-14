@@ -114,6 +114,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                     targetSection: quiz.targetSection,
                     assignedBatches: quiz.assignedBatches || [],
                     questions: questions.map((q) => ({
+                        id: q.id,
                         text: q.text,
                         type: q.type,
                         options: q.options,

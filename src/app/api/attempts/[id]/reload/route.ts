@@ -28,20 +28,22 @@ export async function POST(
         return NextResponse.json({ error: 'Quiz already submitted' }, { status: 400 })
     }
 
-    // Increment reload count
+    // Use atomic increment to avoid race conditions
+    const RELOAD_THRESHOLD = 2
     const newReloadCount = attempt.reloadCount + 1
+    const shouldLogViolation = newReloadCount > RELOAD_THRESHOLD
 
+    // Single consolidated update with atomic increments
     await prisma.quizAttempt.update({
         where: { id },
-        data: { reloadCount: newReloadCount }
+        data: {
+            reloadCount: { increment: 1 },
+            ...(shouldLogViolation && { violationCount: { increment: 1 } })
+        }
     })
 
-    // Log as violation if more than 2 reloads
-    const RELOAD_THRESHOLD = 2
-    let violationLogged = false
-    let message = ''
-
-    if (newReloadCount > RELOAD_THRESHOLD) {
+    // Log violation separately
+    if (shouldLogViolation) {
         await prisma.violationLog.create({
             data: {
                 attemptId: id,
@@ -49,14 +51,10 @@ export async function POST(
                 description: `Page reloaded ${newReloadCount} times (threshold: ${RELOAD_THRESHOLD})`
             }
         })
+    }
 
-        // Update violation count
-        await prisma.quizAttempt.update({
-            where: { id },
-            data: { violationCount: attempt.violationCount + 1 }
-        })
-
-        violationLogged = true
+    let message = ''
+    if (shouldLogViolation) {
         message = `⚠️ Page reload #${newReloadCount} recorded as violation`
     } else if (newReloadCount === RELOAD_THRESHOLD) {
         message = `⚠️ Next reload will be recorded as a violation`
@@ -65,7 +63,7 @@ export async function POST(
     return NextResponse.json({
         success: true,
         reloadCount: newReloadCount,
-        violationLogged,
+        violationLogged: shouldLogViolation,
         message
     })
 }

@@ -64,12 +64,14 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const [result, setResult] = useState<{ score: number; totalPoints: number } | null>(null)
     const [screenProtectionActive, setScreenProtectionActive] = useState(false)
     const [reloadWarning, setReloadWarning] = useState<string | null>(null)
+    const [isFullscreen, setIsFullscreen] = useState(true)
     const timerInitialized = useRef(false)
 
     const timerRef = useRef<NodeJS.Timeout | null>(null)
     const startTimeRef = useRef<number>(Date.now())
     const violationCountRef = useRef(0)
     const lastViolationTimeRef = useRef(0)
+    const timerExpiredHandled = useRef(false) // Prevent double-trigger on timer expiry
 
     // Init Quiz (Start/Resume)
     useEffect(() => {
@@ -260,6 +262,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
         // Move to next question
         if (currentQuestionIndex < questionOrder.length - 1) {
+            timerInitialized.current = false // Allow timer reset for new question
+            timerExpiredHandled.current = false // Reset timer expiry guard for next question
             setCurrentQuestionIndex(prev => prev + 1)
             // PER_QUESTION timer reset handled in useEffect via loading new question data?
             // Actually `timeLeft` reset is done in `loadQuestion` (Step 170 replacement).
@@ -307,6 +311,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                     totalPoints: data.totalPoints
                 })
                 setCompleted(true)
+                // Exit fullscreen on completion
+                if (document.fullscreenElement) document.exitFullscreen().catch(() => { })
                 // Remove redirect to allow viewing result
                 // router.push(`/student`) 
             }
@@ -317,9 +323,19 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     useEffect(() => {
         // If timeLeft is -1, time is unlimited, so don't auto-submit
         if (timeLeft !== null && timeLeft !== -1 && timeLeft <= 0 && !submitting && !completed) {
-            forceSubmit()
+            // Check guard to prevent double-trigger
+            if (timerExpiredHandled.current) return
+            timerExpiredHandled.current = true
+
+            if (timingMode === 'PER_QUESTION') {
+                // For per-question timing, move to next question instead of submitting whole quiz
+                handleNext()
+            } else {
+                // For total duration, submit the quiz
+                forceSubmit()
+            }
         }
-    }, [timeLeft, submitting, completed, forceSubmit])
+    }, [timeLeft, submitting, completed, forceSubmit, timingMode, handleNext])
 
     // Rate-limited violation logging
     const logViolation = useCallback(async (type: string) => {
@@ -528,6 +544,31 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
             document.removeEventListener('copy', preventCopy, true)
             document.removeEventListener('cut', preventCopy, true)
             document.removeEventListener('contextmenu', preventContextMenu, true)
+        }
+    }, [attemptId, completed, logViolation])
+
+    // FULLSCREEN ENFORCEMENT
+    useEffect(() => {
+        if (!attemptId || completed) return
+
+        const handleFullscreenChange = () => {
+            const isFs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement)
+            setIsFullscreen(isFs)
+            if (!isFs) {
+                logViolation('FULLSCREEN_EXIT')
+            }
+        }
+
+        // Check initial state
+        const isFs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement)
+        setIsFullscreen(isFs)
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange)
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange)
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
         }
     }, [attemptId, completed, logViolation])
 
@@ -945,6 +986,39 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-theme select-none quiz-protected">
+            {/* Fullscreen Enforcement Overlay */}
+            <AnimatePresence>
+                {!isFullscreen && !completed && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center"
+                        style={{ background: 'var(--bg-primary)' }}
+                    >
+                        <div className="text-center space-y-6 max-w-sm mx-auto px-6">
+                            <div className="w-16 h-16 mx-auto rounded-full bg-red-500/10 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                </svg>
+                            </div>
+                            <h2 className="text-xl font-semibold text-theme-primary">Fullscreen Required</h2>
+                            <p className="text-sm text-theme-muted">This quiz must be taken in fullscreen mode. Exiting fullscreen has been logged as a violation.</p>
+                            <button
+                                onClick={() => {
+                                    const el = document.documentElement
+                                    if (el.requestFullscreen) el.requestFullscreen()
+                                    else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
+                                }}
+                                className="btn btn-primary btn-lg w-full"
+                            >
+                                Return to Fullscreen
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Screen Protection Overlay - Hides content during potential screenshot */}
             <AnimatePresence>
                 {screenProtectionActive && (

@@ -39,11 +39,12 @@ export async function POST(
         }
     })
 
-    // Update violation count
-    await prisma.quizAttempt.update({
+    // Update violation count atomically to prevent race conditions
+    const updated = await prisma.quizAttempt.update({
         where: { id },
-        data: { violationCount: attempt.violationCount + 1 }
+        data: { violationCount: { increment: 1 } },
+        select: { violationCount: true }
     })
 
-    return NextResponse.json({ success: true, violationCount: attempt.violationCount + 1 })
+    return NextResponse.json({ success: true, violationCount: updated.violationCount })
 }
