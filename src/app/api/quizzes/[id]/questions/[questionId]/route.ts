@@ -14,7 +14,7 @@ export async function GET(
     }
 
     const { id, questionId } = await params
-    const user = session.user as any
+    const user = session.user
 
     const quiz = await prisma.quiz.findUnique({ where: { id } })
     if (!quiz || (quiz.facultyId !== user.id && user.role !== 'ADMIN')) {
@@ -43,7 +43,7 @@ export async function PUT(
     }
 
     const { id, questionId } = await params
-    const user = session.user as any
+    const user = session.user
     const body = await request.json()
 
     const quiz = await prisma.quiz.findUnique({ where: { id } })
@@ -85,7 +85,7 @@ export async function DELETE(
     }
 
     const { id, questionId } = await params
-    const user = session.user as any
+    const user = session.user
 
     const quiz = await prisma.quiz.findUnique({ where: { id } })
     if (!quiz || (quiz.facultyId !== user.id && user.role !== 'ADMIN')) {
@@ -123,7 +123,7 @@ export async function POST(
     }
 
     const { id } = await params
-    const user = session.user as any
+    const user = session.user
     const body = await request.json()
 
     const quiz = await prisma.quiz.findUnique({ where: { id } })

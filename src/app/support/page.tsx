@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Navbar } from '@/components/landing/Navbar'
 import { Footer } from '@/components/landing/Footer'
-import { LifeBuoy, BookOpen, Settings, AlertCircle } from 'lucide-react'
+import { BookOpen, Settings, AlertCircle } from 'lucide-react'
 
 export default function SupportPage() {
     return (

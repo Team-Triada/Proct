@@ -15,7 +15,7 @@ export async function POST(
 
     const { id } = await params
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session.user as any
+    const user = session.user
     const body = await request.json()
     const { questionId, currentQuestionIndex, textAnswer, selectedIndices, selectedIndex } = body
 

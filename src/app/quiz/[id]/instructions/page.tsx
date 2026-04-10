@@ -12,11 +12,11 @@ export default async function QuizInstructionsPage({
 }) {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'STUDENT') {
+    if (!session || (session.user).role !== 'STUDENT') {
         redirect('/login')
     }
 
-    const user = session.user as any
+    const user = session.user
     const { id } = await params
 
     const quiz = await prisma.quiz.findUnique({

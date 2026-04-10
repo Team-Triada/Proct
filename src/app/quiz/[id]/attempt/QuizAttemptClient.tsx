@@ -38,7 +38,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const router = useRouter()
     const { data: session } = useSession()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session?.user as any
+    const user = session?.user
 
     const [answers, setAnswers] = useState<Record<string, any>>({})
     const [questionOrder, setQuestionOrder] = useState<string[]>([])

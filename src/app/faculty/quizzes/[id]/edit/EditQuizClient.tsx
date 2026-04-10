@@ -654,7 +654,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                 Delete Quiz?
                             </h3>
                             <p className="text-theme-muted text-sm mb-6">
-                                This will permanently delete "{quiz.title}" including all {questions.length} questions
+                                This will permanently delete &quot;{quiz.title}&quot; including all {questions.length} questions
                                 {quiz._count && quiz._count.attempts > 0 && ` and ${quiz._count.attempts} student attempts`}.
                             </p>
                             <div className="flex gap-3">

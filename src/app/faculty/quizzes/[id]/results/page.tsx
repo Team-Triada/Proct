@@ -7,7 +7,7 @@ import Link from 'next/link'
 export default async function QuizResultsPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session?.user as any
+    const user = session?.user
 
     if (!session || user.role === 'STUDENT') {
         redirect('/')

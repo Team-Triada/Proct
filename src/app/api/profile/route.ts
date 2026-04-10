@@ -12,7 +12,7 @@ export async function GET() {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session.user as any
+    const user = session.user
 
     const profile = await prisma.user.findUnique({
         where: { id: user.id },
@@ -47,7 +47,7 @@ export async function PUT(request: Request) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session.user as any
+    const user = session.user
     const body = await request.json()
 
     const { name, rollNumber, campusId, semester, batch, section, department, image } = body

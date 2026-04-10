@@ -64,7 +64,7 @@ export default function TermsPage() {
                                 <li>• Use automated tools, bots, or scripts during assessments</li>
                                 <li>• Access quizzes not assigned to their academic cohort</li>
                                 <li>• Impersonate another user or provide false credentials</li>
-                                <li>• Interfere with the platform's functionality or security</li>
+                                <li>• Interfere with the platform&apos;s functionality or security</li>
                             </ul>
                         </div>
                     </section>
@@ -77,7 +77,7 @@ export default function TermsPage() {
                         </h2>
                         <div className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-6 space-y-4">
                             <p className="text-[var(--text-secondary)] leading-relaxed">
-                                Proct enforces academic integrity through controlled quiz flow, time limits, and monitoring of rule violations. Users agree to comply with their institution's academic integrity policies.
+                                Proct enforces academic integrity through controlled quiz flow, time limits, and monitoring of rule violations. Users agree to comply with their institution&apos;s academic integrity policies.
                             </p>
                             <p className="text-[var(--text-secondary)] leading-relaxed">
                                 Violations may be logged and reported to institutional administrators for appropriate action.
@@ -93,7 +93,7 @@ export default function TermsPage() {
                         </h2>
                         <div className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-6 space-y-4">
                             <p className="text-[var(--text-secondary)] leading-relaxed">
-                                Proct is provided "as is" without warranties of any kind. We do not guarantee uninterrupted access or error-free operation.
+                                Proct is provided &quot;as is&quot; without warranties of any kind. We do not guarantee uninterrupted access or error-free operation.
                             </p>
                             <p className="text-[var(--text-secondary)] leading-relaxed">
                                 In no event shall Proct or Triada be liable for any indirect, incidental, or consequential damages arising from use of the platform.

@@ -2,13 +2,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
 
 export default async function StudentAttemptResultPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session?.user as any
+    const user = session?.user
 
     if (!session || user.role !== 'STUDENT') {
         redirect('/login')

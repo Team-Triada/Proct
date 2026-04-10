@@ -101,7 +101,7 @@ export default function ProfilePage() {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session?.user as any
+    const user = session?.user
 
     if (loading) {
         return (

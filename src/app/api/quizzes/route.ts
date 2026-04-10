@@ -11,7 +11,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
 
     if (user.role === 'FACULTY') {
         const quizzes = await prisma.quiz.findMany({
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
 
     if (user.role !== 'FACULTY') {
         return NextResponse.json({ error: 'Only faculty can create quizzes' }, { status: 403 })

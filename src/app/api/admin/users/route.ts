@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs'
 
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -38,10 +38,11 @@ export async function POST(request: Request) {
             }
         })
 
-        const { password: _, ...userWithoutPassword } = user
+        const { password: _password, ...userWithoutPassword } = user
         return NextResponse.json(userWithoutPassword, { status: 201 })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error creating user:', error)
-        return NextResponse.json({ error: error.message || 'Failed to create user' }, { status: 500 })
+        const message = error instanceof Error ? error.message : 'Failed to create user'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }

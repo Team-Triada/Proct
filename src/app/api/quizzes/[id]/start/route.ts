@@ -10,11 +10,11 @@ export async function POST(
 ) {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'STUDENT') {
+    if (!session || (session.user).role !== 'STUDENT') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
     const { id } = await params
 
     // Check if quiz exists and is published

@@ -15,7 +15,6 @@ import {
   Building2,
   GraduationCap,
   ArrowRight,
-  CheckCircle
 } from 'lucide-react'
 import { Navbar } from '@/components/landing/Navbar'
 import { Footer } from '@/components/landing/Footer'

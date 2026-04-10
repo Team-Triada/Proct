@@ -62,7 +62,7 @@ export default function FacultyStudentsPage() {
         if (status === 'unauthenticated') {
             router.push('/login')
         } else if (status === 'authenticated') {
-            const user = session?.user as any
+            const user = session?.user
             if (user?.role !== 'FACULTY' && user?.role !== 'ADMIN') {
                 router.push('/login')
             } else {
@@ -129,7 +129,7 @@ export default function FacultyStudentsPage() {
         }
     }
 
-    const user = session?.user as any
+    const user = session?.user
 
     // Filter students based on search
     const filteredStudents = students.filter(student => {

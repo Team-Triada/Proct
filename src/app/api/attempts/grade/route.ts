@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
     }
 
-    const user = session.user as any
+    const user = session.user
 
     // Verify faculty owns the quiz for this attempt
     const attempt = await prisma.quizAttempt.findUnique({
