@@ -6,10 +6,12 @@ import Link from 'next/link'
 
 export default async function QuizResultsPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session?.user as any
+    if (!session) {
+        redirect('/')
+    }
+    const user = session.user
 
-    if (!session || user.role === 'STUDENT') {
+    if (user.role === 'STUDENT') {
         redirect('/')
     }
 
@@ -62,8 +64,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                             <tbody className="divide-y divide-theme-subtle">
                                 {quiz.attempts.map((attempt) => {
                                     // Check if any answer needs grading (pointsAwarded is null)
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    const needsGrading = (attempt.answers as any[]).some(a => a.pointsAwarded === null)
+                                    const needsGrading = attempt.answers.some(a => a.pointsAwarded === null)
 
                                     return (<tr key={attempt.id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-6 py-4 font-medium text-theme-primary">{attempt.student.name}</td>

@@ -9,7 +9,7 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -18,7 +18,7 @@ export async function PUT(
         const body = await request.json()
         const { email, password, name, role, department, semester, batch, section, rollNumber } = body
 
-        const data: any = {}
+        const data: Record<string, unknown> = {}
         if (email) data.email = email
         if (password && password.trim() !== '') {
             data.password = await bcrypt.hash(password, 10)
@@ -37,10 +37,12 @@ export async function PUT(
             data
         })
 
-        const { password: _, ...userWithoutPassword } = user
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _password, ...userWithoutPassword } = user
         return NextResponse.json(userWithoutPassword)
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message || 'Failed to update user' }, { status: 500 })
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to update user'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }
 
@@ -49,7 +51,7 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -125,8 +127,9 @@ export async function DELETE(
         })
 
         return NextResponse.json({ success: true })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Delete error:', error)
-        return NextResponse.json({ error: 'Failed to delete user: ' + error.message }, { status: 500 })
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        return NextResponse.json({ error: 'Failed to delete user: ' + message }, { status: 500 })
     }
 }

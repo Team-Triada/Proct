@@ -8,7 +8,7 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -21,7 +21,7 @@ export async function POST(
         })
 
         return NextResponse.json(subject)
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to approve subject' }, { status: 500 })
     }
 }

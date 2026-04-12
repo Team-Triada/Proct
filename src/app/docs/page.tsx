@@ -1,8 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
 import {
     Book,
     Server,
@@ -11,12 +9,8 @@ import {
     Database,
     Code,
     Lock,
-    ChevronRight,
     GitBranch,
-    Terminal,
-    FolderOpen,
     CheckCircle,
-    XCircle,
     Clock,
     UserCheck,
     FileText,
@@ -96,7 +90,7 @@ export default function DocsPage() {
                                 Proct Documentation
                             </h1>
                             <p className="text-xl text-[var(--text-muted)] leading-relaxed max-w-3xl">
-                                The complete guide to Proct's integrity-first assessment platform.
+                                The complete guide to Proct&apos;s integrity-first assessment platform.
                                 Understand how we enforce fairness, manage access, and structure data.
                             </p>
 
@@ -265,7 +259,7 @@ function FeatureCard({ title, desc, icon }: { title: string, desc: string, icon:
     )
 }
 
-function WorkflowBlock({ title, steps, color = "indigo" }: { title: string, steps: any[], color?: string }) {
+function WorkflowBlock({ title, steps }: { title: string, steps: { icon: React.ReactElement<{ size?: number }>, label: string, desc: string }[], color?: string }) {
     return (
         <div className="bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-subtle)] p-8">
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-8 border-b border-[var(--border-subtle)] pb-4">{title}</h3>
@@ -274,7 +268,7 @@ function WorkflowBlock({ title, steps, color = "indigo" }: { title: string, step
                 {/* Connecting Line (Desktop) */}
                 <div className="hidden md:block absolute top-[24px] left-8 right-8 h-[2px] bg-[var(--border)] -z-10" />
 
-                {steps.map((step: any, i: number) => (
+                {steps.map((step, i: number) => (
                     <div key={i} className="flex flex-row md:flex-col items-center gap-4 md:gap-6 relative w-full md:w-auto">
                         {/* Connecting Line (Mobile) */}
                         {i !== steps.length - 1 && (
@@ -284,7 +278,7 @@ function WorkflowBlock({ title, steps, color = "indigo" }: { title: string, step
                         <div className={`w-12 h-12 rounded-full border-4 border-[var(--bg-primary)] flex items-center justify-center z-10 
                             ${i === steps.length - 1 ? 'bg-[var(--success)] text-white' : `bg-[var(--bg-tertiary)] text-[var(--text-muted)]`}
                             transition-all hover:scale-110 shadow-lg`}>
-                            {React.cloneElement(step.icon, { size: 20 })}
+                            {React.cloneElement(step.icon as React.ReactElement<{ size?: number }>, { size: 20 })}
                         </div>
                         <div className="text-left md:text-center bg-[var(--bg-primary)] md:bg-transparent p-2 md:p-0 rounded-lg border border-[var(--border-subtle)] md:border-none w-full md:w-auto">
                             <h4 className="font-bold text-[var(--text-primary)] text-sm">{step.label}</h4>

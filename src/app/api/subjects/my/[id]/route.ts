@@ -13,7 +13,7 @@ export async function PUT(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
 
     if (user.role !== 'FACULTY') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -56,9 +56,10 @@ export async function PUT(
         })
 
         return NextResponse.json(updated)
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error updating subject:', error)
-        return NextResponse.json({ error: error.message || 'Failed to update subject' }, { status: 500 })
+        const message = error instanceof Error ? error.message : 'Failed to update subject'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }
 
@@ -72,7 +73,7 @@ export async function DELETE(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
 
     if (user.role !== 'FACULTY') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -90,8 +91,9 @@ export async function DELETE(
         })
 
         return NextResponse.json({ success: true })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error removing subject:', error)
-        return NextResponse.json({ error: error.message || 'Failed to remove subject' }, { status: 500 })
+        const message = error instanceof Error ? error.message : 'Failed to remove subject'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }

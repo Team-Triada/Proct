@@ -56,7 +56,7 @@ export default function FacultyDashboard() {
         if (status === 'unauthenticated') {
             router.push('/login')
         } else if (status === 'authenticated') {
-            const user = session?.user as any
+            const user = session?.user
             if (user?.role !== 'FACULTY') {
                 router.push('/login')
             } else {
@@ -99,8 +99,8 @@ export default function FacultyDashboard() {
             setShowAddModal(false)
             setFormData({ code: '', name: '', semester: '1', department: 'Computer Science' })
             fetchSubjects()
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err))
         } finally {
             setSaving(false)
         }
@@ -128,8 +128,8 @@ export default function FacultyDashboard() {
             setEditingSubject(null)
             setFormData({ code: '', name: '', semester: '1', department: 'Computer Science' })
             fetchSubjects()
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err))
         } finally {
             setSaving(false)
         }
@@ -147,7 +147,7 @@ export default function FacultyDashboard() {
         setShowEditModal(true)
     }
 
-    const user = session?.user as any
+    const user = session?.user
 
     if (status === 'loading' || loading) {
         return (
@@ -235,7 +235,7 @@ export default function FacultyDashboard() {
                     {subjects.length === 0 ? (
                         <div className="card text-center py-12">
                             <p className="text-theme-muted">No subjects assigned to you yet</p>
-                            <p className="text-sm text-theme-muted mt-2">Click "Add Subject" to add your first subject</p>
+                            <p className="text-sm text-theme-muted mt-2">Click &quot;Add Subject&quot; to add your first subject</p>
                         </div>
                     ) : (
                         <div className="grid sm:grid-cols-2 gap-4">

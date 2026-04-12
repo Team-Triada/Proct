@@ -68,14 +68,14 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
             const data = await res.json()
             setQuiz(data)
             // Parse questions with type handling
-            setQuestions(data.questions.map((q: any) => ({
+            setQuestions(data.questions.map((q: Question) => ({
                 ...q,
                 type: q.type || 'MULTIPLE_CHOICE',
                 options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
                 correctIndices: q.correctIndices || [q.correctIndex],
                 isEditing: false
             })))
-        } catch (error) {
+        } catch {
             router.push('/faculty/quizzes')
         } finally {
             setLoading(false)
@@ -91,13 +91,13 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
         if (!hasChanges || !quiz) return
 
         const timer = setTimeout(() => {
-            handleSave(false)
+            handleSave()
         }, 2000)
 
         return () => clearTimeout(timer)
-    }, [quiz, questions, hasChanges])
+    }, [quiz, questions, hasChanges]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    const handleSave = async (showFeedback = true) => {
+    const handleSave = async () => {
         if (!quiz) return
         setSaving(true)
 
@@ -262,7 +262,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                             )}
                             <ThemeToggle />
                             <button
-                                onClick={() => handleSave(true)}
+                                onClick={() => handleSave()}
                                 disabled={saving || !hasChanges}
                                 className="btn btn-primary text-sm"
                             >
@@ -654,7 +654,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                 Delete Quiz?
                             </h3>
                             <p className="text-theme-muted text-sm mb-6">
-                                This will permanently delete "{quiz.title}" including all {questions.length} questions
+                                This will permanently delete &quot;{quiz.title}&quot; including all {questions.length} questions
                                 {quiz._count && quiz._count.attempts > 0 && ` and ${quiz._count.attempts} student attempts`}.
                             </p>
                             <div className="flex gap-3">

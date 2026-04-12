@@ -8,7 +8,7 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -24,7 +24,7 @@ export async function PUT(
         })
 
         return NextResponse.json(subject)
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to update subject' }, { status: 500 })
     }
 }
@@ -34,7 +34,7 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -46,7 +46,7 @@ export async function DELETE(
         })
 
         return NextResponse.json({ success: true })
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to delete subject' }, { status: 500 })
     }
 }

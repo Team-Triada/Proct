@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 
 export async function POST(
     request: Request,
@@ -14,8 +15,7 @@ export async function POST(
     }
 
     const { id } = await params
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session.user as any
+    const user = session.user
     const body = await request.json()
     const { questionId, currentQuestionIndex, textAnswer, selectedIndices, selectedIndex } = body
 
@@ -130,21 +130,13 @@ export async function POST(
     }
 
     // Build answer data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const answerData: any = {
-        attemptId: id,
-        questionId: questionId,
+    const baseAnswerData = {
         isCorrect,
         pointsAwarded,
-        answeredAt: new Date()
-    }
-
-    if (selectedIndices !== undefined) {
-        answerData.selectedIndices = JSON.stringify(selectedIndices)
-    } else if (textAnswer !== undefined) {
-        answerData.textAnswer = textAnswer
-    } else if (selectedIndex !== undefined) {
-        answerData.selectedIndex = selectedIndex
+        answeredAt: new Date(),
+        selectedIndices: selectedIndices !== undefined ? JSON.stringify(selectedIndices) : undefined,
+        textAnswer: textAnswer !== undefined ? textAnswer : undefined,
+        selectedIndex: selectedIndex !== undefined ? selectedIndex : undefined,
     }
 
     await prisma.answer.upsert({
@@ -154,16 +146,19 @@ export async function POST(
                 questionId: questionId
             }
         },
-        update: answerData,
-        create: answerData
+        update: baseAnswerData,
+        create: {
+            attemptId: id,
+            questionId: questionId,
+            ...baseAnswerData
+        }
     })
 
     // Prepare Attempt Update Data
     // Calculate elapsed time since last checkpoint (currentQuestionStartTime)
     const elapsedSinceCheckpoint = Math.floor((now.getTime() - new Date(attempt.currentQuestionStartTime).getTime()) / 1000)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {
+    const updateData: Prisma.QuizAttemptUpdateInput = {
         lastActivityAt: new Date(),
         // Accumulate active time
         timeSpent: attempt.timeSpent + elapsedSinceCheckpoint,

@@ -10,7 +10,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
 
     if (user.role !== 'FACULTY') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
 
     if (user.role !== 'FACULTY') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
         if (existing) {
             // If exists, just connect it to this faculty
-            const updated = await prisma.user.update({
+            await prisma.user.update({
                 where: { id: user.id },
                 data: {
                     subjects: { connect: { id: existing.id } }
@@ -84,8 +84,9 @@ export async function POST(request: Request) {
         })
 
         return NextResponse.json(subject, { status: 201 })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error creating subject:', error)
-        return NextResponse.json({ error: error.message || 'Failed to create subject' }, { status: 500 })
+        const message = error instanceof Error ? error.message : 'Failed to create subject'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }

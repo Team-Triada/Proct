@@ -19,12 +19,12 @@ export default async function AdminQuizDetail({
 }) {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || (session.user).role !== 'ADMIN') {
         redirect('/login')
     }
 
     const { id } = await params
-    const user = session.user as any
+    const user = session.user
 
     const quiz = await prisma.quiz.findUnique({
         where: { id },
@@ -111,7 +111,6 @@ export default async function AdminQuizDetail({
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-theme-muted">Assigned Years</span>
-                                    {/* @ts-ignore */}
                                     <span className="text-theme-primary text-right">{quiz.assignedBatches ? JSON.stringify(quiz.assignedBatches) : 'All Years'}</span>
                                 </div>
                             </div>

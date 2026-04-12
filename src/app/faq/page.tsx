@@ -40,7 +40,7 @@ export default function FAQPage() {
             <main className="pt-32 pb-20 container mx-auto px-6 max-w-4xl">
                 <div className="text-center mb-16">
                     <h1 className="font-manrope font-extrabold text-4xl md:text-5xl mb-4 tracking-tight">Frequently Asked Questions</h1>
-                    <p className="text-[var(--text-muted)]">Common questions about Proct's philosophy and features.</p>
+                    <p className="text-[var(--text-muted)]">Common questions about Proct&apos;s philosophy and features.</p>
                 </div>
 
                 <div className="grid gap-6">

@@ -2,15 +2,17 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
+import type { Question, Answer } from '@prisma/client'
 
 export default async function StudentAttemptResultPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session?.user as any
+    if (!session) {
+        redirect('/login')
+    }
+    const user = session.user
 
-    if (!session || user.role !== 'STUDENT') {
+    if (user.role !== 'STUDENT') {
         redirect('/login')
     }
 
@@ -40,15 +42,12 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
     })
     const questionsMap = new Map(questions.map(q => [q.id, q]))
 
-    const fullData = questionOrder.map((qId, index) => {
+    const fullData = questionOrder.flatMap((qId, index) => {
         const question = questionsMap.get(qId)
         const answer = answersMap.get(qId)
-        return {
-            questionNumber: index + 1,
-            question,
-            answer
-        }
-    }).filter(item => item.question)
+        if (!question) return []
+        return [{ questionNumber: index + 1, question, answer }]
+    })
 
     return (
         <DashboardLayout user={user} navigation={[
@@ -73,7 +72,7 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
                     </div>
                 </div>
 
-                {fullData.map((item: any) => (
+                {fullData.map((item) => (
                     <div key={item.question.id} className="card p-6">
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-lg font-medium">Question {item.questionNumber}</h3>
@@ -131,13 +130,12 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
     )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function RenderAnswer(question: any, answer: any) {
+function RenderAnswer(question: Question, answer: Answer | undefined) {
     if (!answer) return <span className="text-theme-muted text-sm italic">Not answered</span>
 
     if (question.type === 'MULTIPLE_CHOICE' || question.type === 'DROPDOWN') {
         const options = JSON.parse(question.options)
-        return <span className="font-medium">{options[answer.selectedIndex] || '-'}</span>
+        return <span className="font-medium">{answer.selectedIndex !== null ? options[answer.selectedIndex] : '-'}</span>
     }
 
     if (question.type === 'CHECKBOX') {
@@ -157,8 +155,7 @@ function RenderAnswer(question: any, answer: any) {
     return <span className="whitespace-pre-wrap font-serif">{answer.textAnswer}</span>
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function RenderCorrectAnswer(question: any) {
+function RenderCorrectAnswer(question: Question) {
     if (question.type === 'MULTIPLE_CHOICE' || question.type === 'DROPDOWN') {
         const options = JSON.parse(question.options)
         return <span className="font-medium">{options[question.correctIndex]}</span>

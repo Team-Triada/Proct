@@ -14,7 +14,7 @@ export async function GET(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
     const { id } = await params
 
     const attempt = await prisma.quizAttempt.findUnique({
@@ -62,7 +62,7 @@ export async function GET(
     let options: string[] = []
     try {
         options = JSON.parse(question.options || '[]') as string[]
-    } catch (e) {
+    } catch {
         options = []
     }
     // const correctOption = options[question.correctIndex] // Not sending correct answer to client
@@ -98,8 +98,7 @@ export async function POST(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session.user as any
+    const user = session.user
     const { id } = await params
     const body = await request.json()
     const { selectedIndex, selectedIndices, textAnswer, shuffleMapping, timeTaken } = body
@@ -226,10 +225,8 @@ export async function POST(
         // Manual grading will update the attempt score later
         let score = 0
         answers.forEach(a => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if ((a as any).pointsAwarded !== null) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                score += (a as any).pointsAwarded
+            if (a.pointsAwarded !== null) {
+                score += a.pointsAwarded
             }
         })
 
