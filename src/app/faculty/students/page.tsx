@@ -122,8 +122,8 @@ export default function FacultyStudentsPage() {
             setShowEditModal(false)
             setEditingStudent(null)
             fetchStudents()
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err))
         } finally {
             setSaving(false)
         }

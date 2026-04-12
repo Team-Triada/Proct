@@ -136,7 +136,7 @@ export async function POST(
                         }
                     })
                     break // Success
-                } catch (e: any) {
+                } catch (e: unknown) {
                     if (attempt === 2) throw e // Final retry failed
                     // Otherwise retry after brief delay
                     await new Promise(r => setTimeout(r, 50))

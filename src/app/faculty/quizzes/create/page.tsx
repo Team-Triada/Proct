@@ -155,7 +155,7 @@ export default function CreateQuizPage() {
         } else {
             setWarnings([])
         }
-    }, [currentQ.text, currentQ.options])
+    }, [currentQ.text, currentQ.options]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const startNewQuestion = (type: QuestionType) => {
         setCurrentQ({
@@ -439,7 +439,7 @@ export default function CreateQuizPage() {
                                     </div>
                                 </div>
                                 <p className="text-xs text-theme-muted">
-                                    Leave as "All" to allow everyone. Be careful with unrestricted quizzes.
+                                    Leave as &quot;All&quot; to allow everyone. Be careful with unrestricted quizzes.
                                 </p>
 
                                 <div>

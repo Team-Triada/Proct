@@ -99,8 +99,8 @@ export default function FacultyDashboard() {
             setShowAddModal(false)
             setFormData({ code: '', name: '', semester: '1', department: 'Computer Science' })
             fetchSubjects()
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err))
         } finally {
             setSaving(false)
         }
@@ -128,8 +128,8 @@ export default function FacultyDashboard() {
             setEditingSubject(null)
             setFormData({ code: '', name: '', semester: '1', department: 'Computer Science' })
             fetchSubjects()
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err))
         } finally {
             setSaving(false)
         }

@@ -127,7 +127,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                 alert(data.error || 'Failed to delete user')
             }
         } catch {
-            console.error(error)
+            console.error('Failed to delete user')
             alert('Error deleting user')
         } finally {
             setLoading(false)

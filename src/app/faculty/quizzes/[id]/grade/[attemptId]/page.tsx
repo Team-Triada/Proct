@@ -6,10 +6,12 @@ import GradingClient from './GradingClient'
 
 export default async function GradingPage({ params }: { params: Promise<{ id: string; attemptId: string }> }) {
     const session = await getServerSession(authOptions)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session?.user
+    if (!session) {
+        redirect('/')
+    }
+    const user = session.user
 
-    if (!session || user.role === 'STUDENT') {
+    if (user.role === 'STUDENT') {
         redirect('/')
     }
 
@@ -55,15 +57,14 @@ export default async function GradingPage({ params }: { params: Promise<{ id: st
             question,
             answer
         }
-    }).filter(item => item.question) // Safety check
+    }).filter((item): item is { questionNumber: number; question: NonNullable<typeof item.question>; answer: typeof item.answer } => item.question !== undefined)
 
     return (
         <GradingClient
             attemptId={attempt.id}
             studentName={attempt.student.name}
             quizTitle={attempt.quiz.title}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            data={fullData as any}
+            data={fullData}
         />
     )
 }

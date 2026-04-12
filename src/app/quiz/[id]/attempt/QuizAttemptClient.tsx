@@ -20,12 +20,18 @@ interface QuestionData {
     type: QuestionType
 }
 
-interface AttemptPayload {
-    shuffleMapping: number[]
-    timeTaken: number
+interface AnswerState {
     selectedIndex?: number | null
     selectedIndices?: number[]
     textAnswer?: string
+    shuffleMapping?: number[]
+}
+
+interface SavedAnswer {
+    questionId: string
+    selectedIndex?: number | null
+    selectedIndices?: string | null
+    textAnswer?: string | null
 }
 
 const formatTime = (seconds: number) => {
@@ -37,14 +43,12 @@ const formatTime = (seconds: number) => {
 export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const router = useRouter()
     const { data: session } = useSession()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = session?.user
 
-    const [answers, setAnswers] = useState<Record<string, any>>({})
+    const [answers, setAnswers] = useState<Record<string, AnswerState>>({})
     const [questionOrder, setQuestionOrder] = useState<string[]>([])
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
     const [timingMode, setTimingMode] = useState<string>('PER_QUESTION') // Default
-    const [totalDuration, setTotalDuration] = useState<number | null>(null)
 
     // Restored State Variables
     const [loading, setLoading] = useState(true)
@@ -94,7 +98,6 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                 setAttemptId(data.attemptId)
                 setQuestionOrder(data.questionOrder)
                 setTimingMode(data.timingMode || 'PER_QUESTION')
-                setTotalDuration(data.totalDuration)
 
                 // Set timer from server (only once on init)
                 if (!timerInitialized.current) {
@@ -112,12 +115,12 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                     setCurrentQuestionIndex(data.currentIndex)
 
                     // Map existing answers to local state
-                    const answerMap: Record<string, any> = {}
-                    data.answers.forEach((ans: any) => {
+                    const answerMap: Record<string, AnswerState> = {}
+                    data.answers.forEach((ans: SavedAnswer) => {
                         answerMap[ans.questionId] = {
-                            selectedIndex: ans.selectedIndex,
+                            selectedIndex: ans.selectedIndex ?? undefined,
                             selectedIndices: ans.selectedIndices ? JSON.parse(ans.selectedIndices) : undefined,
-                            textAnswer: ans.textAnswer
+                            textAnswer: ans.textAnswer ?? undefined
                         }
                     })
                     setAnswers(answerMap)
@@ -165,14 +168,6 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
             setLoading(true)
             try {
-                // We need to tell server which question index we are at, OR just fetch the question ID
-                const qId = questionOrder[currentQuestionIndex]
-                // We need an endpoint to get question details by ID? 
-                // Or just use the existing flow.
-
-                // Existing flow: GET /api/attempts/:id -> Returns question at attempt.currentIndex
-                // So we must ensure attempt.currentIndex is updated on server.
-
                 const res = await fetch(`/api/attempts/${attemptId}?index=${currentQuestionIndex}`)
                 const data = await res.json()
 
@@ -218,11 +213,11 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
             }
         }
         loadQuestion()
-    }, [attemptId, currentQuestionIndex, questionOrder])
+    }, [attemptId, currentQuestionIndex, questionOrder]) // eslint-disable-line react-hooks/exhaustive-deps
 
 
     // Incremental Save (Background)
-    const saveProgress = useCallback(async (qId: string, answerData: any) => {
+    const saveProgress = useCallback(async (qId: string, answerData: AnswerState) => {
         if (!attemptId) return
 
         // Update local state immediately
@@ -246,14 +241,31 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         }
     }, [attemptId, currentQuestionIndex])
 
+    const forceSubmit = useCallback(async () => {
+        if (!attemptId) return
+        try {
+            const res = await fetch(`/api/attempts/${attemptId}/submit`, { method: 'POST' })
+            const data = await res.json()
+            if (data.completed) {
+                setResult({
+                    score: data.score,
+                    totalPoints: data.totalPoints
+                })
+                setCompleted(true)
+                // Exit fullscreen on completion
+                if (document.fullscreenElement) document.exitFullscreen().catch(() => { })
+            }
+        } catch { }
+    }, [attemptId])
+
     // Submit / Next Logic
-    const handleNext = async () => {
+    const handleNext = useCallback(async () => {
         if (!question) return
 
         setSubmitting(true)
 
         // Save current answer
-        let answerData: any = {}
+        let answerData: AnswerState = {}
         if (question.type === 'CHECKBOX') answerData = { selectedIndices }
         else if (question.type.includes('ANSWER')) answerData = { textAnswer }
         else answerData = { selectedIndex }
@@ -265,15 +277,12 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
             timerInitialized.current = false // Allow timer reset for new question
             timerExpiredHandled.current = false // Reset timer expiry guard for next question
             setCurrentQuestionIndex(prev => prev + 1)
-            // PER_QUESTION timer reset handled in useEffect via loading new question data?
-            // Actually `timeLeft` reset is done in `loadQuestion` (Step 170 replacement).
-            // But we need to make sure we don't double decrement or something.
         } else {
             // Finish Quiz
             await forceSubmit()
         }
         setSubmitting(false)
-    }
+    }, [question, selectedIndices, textAnswer, selectedIndex, saveProgress, currentQuestionIndex, questionOrder.length, forceSubmit])
 
     // Timer Interval
     useEffect(() => {
@@ -298,26 +307,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         return () => {
             if (timerRef.current) clearInterval(timerRef.current)
         }
-    }, [question, loading, completed]) // Removed timeLeft to prevent interval recreation on each tick
-
-    const forceSubmit = useCallback(async () => {
-        if (!attemptId) return
-        try {
-            const res = await fetch(`/api/attempts/${attemptId}/submit`, { method: 'POST' })
-            const data = await res.json()
-            if (data.completed) {
-                setResult({
-                    score: data.score,
-                    totalPoints: data.totalPoints
-                })
-                setCompleted(true)
-                // Exit fullscreen on completion
-                if (document.fullscreenElement) document.exitFullscreen().catch(() => { })
-                // Remove redirect to allow viewing result
-                // router.push(`/student`) 
-            }
-        } catch { }
-    }, [attemptId])
+    }, [question, loading, completed]) // eslint-disable-line react-hooks/exhaustive-deps -- timeLeft excluded to prevent interval recreation
 
     // Timer Timeout Action
     useEffect(() => {
@@ -552,7 +542,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         if (!attemptId || completed) return
 
         const handleFullscreenChange = () => {
-            const isFs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement)
+            const doc = document as Document & { webkitFullscreenElement?: Element | null }
+            const isFs = !!(doc.fullscreenElement || doc.webkitFullscreenElement)
             setIsFullscreen(isFs)
             if (!isFs) {
                 logViolation('FULLSCREEN_EXIT')
@@ -560,7 +551,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         }
 
         // Check initial state
-        const isFs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement)
+        const doc = document as Document & { webkitFullscreenElement?: Element | null }
+        const isFs = !!(doc.fullscreenElement || doc.webkitFullscreenElement)
         setIsFullscreen(isFs)
 
         document.addEventListener('fullscreenchange', handleFullscreenChange)
@@ -819,8 +811,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
         // Check for getDisplayMedia (modern browsers)
         if (navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices) {
-            const originalGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices)
-            navigator.mediaDevices.getDisplayMedia = async (constraints?: DisplayMediaStreamOptions) => {
+            navigator.mediaDevices.getDisplayMedia = async () => {
                 handleScreenCapture()
                 throw new Error('Screen capture is not allowed during the quiz')
             }
@@ -1008,7 +999,10 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                                 onClick={() => {
                                     const el = document.documentElement
                                     if (el.requestFullscreen) el.requestFullscreen()
-                                    else if ((el as any).webkitRequestFullscreen) (el as any).webkitRequestFullscreen()
+                                    else {
+                                        const webkitEl = el as HTMLElement & { webkitRequestFullscreen?: () => void }
+                                        if (webkitEl.webkitRequestFullscreen) webkitEl.webkitRequestFullscreen()
+                                    }
                                 }}
                                 className="btn btn-primary btn-lg w-full"
                             >

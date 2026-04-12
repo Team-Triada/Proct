@@ -11,7 +11,6 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = session.user
 
     const profile = await prisma.user.findUnique({
@@ -46,7 +45,6 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = session.user
     const body = await request.json()
 

@@ -259,7 +259,7 @@ function FeatureCard({ title, desc, icon }: { title: string, desc: string, icon:
     )
 }
 
-function WorkflowBlock({ title, steps }: { title: string, steps: { icon: React.ReactElement, label: string, desc: string }[], color?: string }) {
+function WorkflowBlock({ title, steps }: { title: string, steps: { icon: React.ReactElement<{ size?: number }>, label: string, desc: string }[], color?: string }) {
     return (
         <div className="bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-subtle)] p-8">
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-8 border-b border-[var(--border-subtle)] pb-4">{title}</h3>
@@ -278,7 +278,7 @@ function WorkflowBlock({ title, steps }: { title: string, steps: { icon: React.R
                         <div className={`w-12 h-12 rounded-full border-4 border-[var(--bg-primary)] flex items-center justify-center z-10 
                             ${i === steps.length - 1 ? 'bg-[var(--success)] text-white' : `bg-[var(--bg-tertiary)] text-[var(--text-muted)]`}
                             transition-all hover:scale-110 shadow-lg`}>
-                            {React.cloneElement(step.icon, { size: 20 })}
+                            {React.cloneElement(step.icon as React.ReactElement<{ size?: number }>, { size: 20 })}
                         </div>
                         <div className="text-left md:text-center bg-[var(--bg-primary)] md:bg-transparent p-2 md:p-0 rounded-lg border border-[var(--border-subtle)] md:border-none w-full md:w-auto">
                             <h4 className="font-bold text-[var(--text-primary)] text-sm">{step.label}</h4>

@@ -20,7 +20,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-    const { data: session, status } = useSession()
+    const { status } = useSession()
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -100,9 +100,6 @@ export default function ProfilePage() {
         }))
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = session?.user
-
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-theme">
@@ -143,6 +140,7 @@ export default function ProfilePage() {
                         <div className="relative">
                             <div className="w-24 h-24 rounded-full bg-theme-tertiary border-2 border-theme-subtle overflow-hidden flex items-center justify-center">
                                 {formData.image ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                         src={formData.image}
                                         alt={formData.name}

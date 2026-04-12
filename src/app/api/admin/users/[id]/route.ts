@@ -37,6 +37,7 @@ export async function PUT(
             data
         })
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password: _password, ...userWithoutPassword } = user
         return NextResponse.json(userWithoutPassword)
     } catch (error) {

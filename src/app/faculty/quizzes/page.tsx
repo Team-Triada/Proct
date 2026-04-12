@@ -73,7 +73,7 @@ export default async function FacultyQuizzesPage() {
                                     {subjectQuizzes[0]?.subject.name}
                                 </h2>
                                 <div className="space-y-3">
-                                    {subjectQuizzes.map((quiz: any) => {
+                                    {subjectQuizzes.map((quiz) => {
                                         const yearBatches = (quiz.assignedBatches as string[] | null) || []
                                         const targetBatch = quiz.targetSection
 

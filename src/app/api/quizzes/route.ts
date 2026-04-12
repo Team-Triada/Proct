@@ -4,6 +4,15 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { normalizeBatches } from '@/lib/utils'
 
+interface QuestionPayload {
+    text: string
+    type?: string
+    options?: unknown[]
+    correctIndex?: number
+    correctIndices?: unknown[]
+    points?: number
+}
+
 // GET all quizzes for faculty (filtered by their subjects)
 export async function GET() {
     const session = await getServerSession(authOptions)
@@ -97,7 +106,7 @@ export async function POST(request: NextRequest) {
             availableUntil: availableUntil ? new Date(availableUntil) : null,
             facultyId: user.id,
             questions: {
-                create: questions.map((q: any, index: number) => ({
+                create: (questions as QuestionPayload[]).map((q, index: number) => ({
                     text: q.text,
                     type: q.type || 'MULTIPLE_CHOICE',
                     options: JSON.stringify(q.options),

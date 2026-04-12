@@ -83,6 +83,7 @@ export async function GET(
         }
 
         // 4. Hide correct answers for students
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const safeQuestions = quiz.questions.map(({ correctIndex: _correctIndex, ...q }) => q)
         return NextResponse.json({ ...quiz, questions: safeQuestions })
     }

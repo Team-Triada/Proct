@@ -97,7 +97,7 @@ export default async function AdminDashboard() {
                                     Semester {sem}
                                 </h3>
                                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {subjs.map((subject: any) => (
+                                    {subjs.map((subject) => (
                                         <Link
                                             key={subject.id}
                                             href={`/admin/subjects/${subject.id}`}

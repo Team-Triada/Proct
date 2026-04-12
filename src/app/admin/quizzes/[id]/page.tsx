@@ -111,7 +111,6 @@ export default async function AdminQuizDetail({
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-theme-muted">Assigned Years</span>
-                                    {/* @ts-expect-error */}
                                     <span className="text-theme-primary text-right">{quiz.assignedBatches ? JSON.stringify(quiz.assignedBatches) : 'All Years'}</span>
                                 </div>
                             </div>

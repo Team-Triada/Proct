@@ -13,7 +13,7 @@ interface DashboardLayoutProps {
         name: string
         email: string
         role: string
-        rollNumber?: string
+        rollNumber?: string | null
     }
     navigation: { name: string; href: string }[]
 }
