@@ -221,7 +221,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         if (!attemptId) return
 
         // Update local state immediately
-        setAnswers(prev => ({
+        setAnswers((prev: Record<string, AnswerState>) => ({
             ...prev,
             [qId]: answerData
         }))
@@ -276,7 +276,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         if (currentQuestionIndex < questionOrder.length - 1) {
             timerInitialized.current = false // Allow timer reset for new question
             timerExpiredHandled.current = false // Reset timer expiry guard for next question
-            setCurrentQuestionIndex(prev => prev + 1)
+            setCurrentQuestionIndex((prev: number) => prev + 1)
         } else {
             // Finish Quiz
             await forceSubmit()
@@ -294,7 +294,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         if (timerRef.current) clearInterval(timerRef.current)
 
         timerRef.current = setInterval(() => {
-            setTimeLeft((prev) => {
+            setTimeLeft((prev: number | null) => {
                 if (prev === null || prev <= 0) {
                     // Stop the timer when reaching 0
                     if (timerRef.current) clearInterval(timerRef.current)
@@ -895,7 +895,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     }, [attemptId, completed])
 
     const toggleCheckbox = (index: number) => {
-        setSelectedIndices(prev => {
+        setSelectedIndices((prev: number[]) => {
             if (prev.includes(index)) {
                 return prev.filter(i => i !== index)
             } else {
@@ -1208,7 +1208,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                         <div className="relative">
                             <select
                                 value={selectedIndex === null ? '' : selectedIndex}
-                                onChange={(e) => setSelectedIndex(Number(e.target.value))}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedIndex(Number(e.target.value))}
                                 className="w-full p-4 rounded-xl bg-theme-surface border border-theme-subtle appearance-none focus:outline-none focus:ring-2 focus:ring-accent"
                             >
                                 <option value="" disabled>Select an answer...</option>
@@ -1230,7 +1230,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                                 type="text"
                                 placeholder="Type your answer here..."
                                 value={textAnswer}
-                                onChange={(e) => setTextAnswer(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTextAnswer(e.target.value)}
                                 className="w-full p-4 rounded-xl bg-theme-surface border border-theme-subtle focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                         </div>
@@ -1242,7 +1242,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                                 rows={6}
                                 placeholder="Type your answer here..."
                                 value={textAnswer}
-                                onChange={(e) => setTextAnswer(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setTextAnswer(e.target.value)}
                                 className="w-full p-4 rounded-xl bg-theme-surface border border-theme-subtle focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                             />
                         </div>
@@ -1250,7 +1250,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
                     <div className="flex justify-between items-center mt-8 gap-4">
                         <button
-                            onClick={() => setCurrentQuestionIndex(prev => prev - 1)}
+                            onClick={() => setCurrentQuestionIndex((prev: number) => prev - 1)}
                             disabled={currentQuestionIndex === 0 || timingMode === 'PER_QUESTION' || timingMode === 'TOTAL_DURATION'}
                             className={`btn btn-secondary flex-1 ${currentQuestionIndex === 0 || timingMode === 'PER_QUESTION' || timingMode === 'TOTAL_DURATION'
                                 ? 'opacity-50 cursor-not-allowed'

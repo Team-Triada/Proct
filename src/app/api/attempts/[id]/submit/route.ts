@@ -47,7 +47,7 @@ export async function POST(
     })
 
     let score = 0
-    answers.forEach(a => {
+    answers.forEach((a: any) => {
         if (a.pointsAwarded !== null) {
             score += a.pointsAwarded
         }

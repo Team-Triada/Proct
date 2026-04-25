@@ -99,7 +99,7 @@ export async function POST(
             if (quiz.timingMode === 'PER_QUESTION') {
                 const questionOrder = JSON.parse(existingAttempt.questionOrder) as string[]
                 const currentQId = questionOrder[existingAttempt.currentIndex]
-                const currentQ = quiz.questions.find(q => q.id === currentQId)
+                const currentQ = quiz.questions.find((q: any) => q.id === currentQId)
 
                 if (currentQ && (currentQ.type === 'SHORT_ANSWER' || currentQ.type === 'LONG_ANSWER')) {
                     remainingSeconds = -1 // Unlimited
@@ -163,8 +163,8 @@ export async function POST(
         .sort(() => Math.random() - 0.5)
         .slice(0, quiz.totalQuestions)
 
-    const questionOrder = shuffledQuestions.map(q => q.id)
-    const totalPoints = shuffledQuestions.reduce((sum, q) => sum + q.points, 0)
+    const questionOrder = shuffledQuestions.map((q: { id: string }) => q.id)
+    const totalPoints = shuffledQuestions.reduce((sum: number, q: { points: number }) => sum + q.points, 0)
 
     // Calculate total time for new attempt
     // Calculate initial time for new attempt
@@ -172,7 +172,7 @@ export async function POST(
     let initialTime = 0
     if (quiz.timingMode === 'PER_QUESTION') {
         // Check first question type
-        const firstQ = quiz.questions.find(q => q.id === questionOrder[0])
+        const firstQ = quiz.questions.find((q: any) => q.id === questionOrder[0])
         if (firstQ && (firstQ.type === 'SHORT_ANSWER' || firstQ.type === 'LONG_ANSWER')) {
             initialTime = -1 // Unlimited for subjective
         } else {

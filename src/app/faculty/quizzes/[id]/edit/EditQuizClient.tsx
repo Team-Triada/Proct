@@ -113,7 +113,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                     isPublished: quiz.isPublished,
                     targetSection: quiz.targetSection,
                     assignedBatches: quiz.assignedBatches || [],
-                    questions: questions.map((q) => ({
+                    questions: questions.map((q: Question) => ({
                         id: q.id,
                         text: q.text,
                         type: q.type,
@@ -182,7 +182,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
     }
 
     const deleteQuestion = (index: number) => {
-        setQuestions(questions.filter((_, i) => i !== index))
+        setQuestions(questions.filter((_: Question, i: number) => i !== index))
         setEditingQuestion(null)
         setHasChanges(true)
     }
@@ -207,7 +207,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
             // Toggle in array
             const indices = q.correctIndices || []
             const newIndices = indices.includes(optionIndex)
-                ? indices.filter(i => i !== optionIndex)
+                ? indices.filter((i: number) => i !== optionIndex)
                 : [...indices, optionIndex]
             updateQuestion(questionIndex, { correctIndices: newIndices })
         } else {
@@ -224,11 +224,11 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
     const removeOption = (questionIndex: number, optionIndex: number) => {
         const q = questions[questionIndex]
         if (q.options.length <= 2) return // Minimum 2 options
-        const newOptions = q.options.filter((_, i) => i !== optionIndex)
+        const newOptions = q.options.filter((_: string, i: number) => i !== optionIndex)
         updateQuestion(questionIndex, {
             options: newOptions,
             correctIndex: q.correctIndex >= newOptions.length ? 0 : q.correctIndex,
-            correctIndices: q.correctIndices.filter(i => i !== optionIndex).map(i => i > optionIndex ? i - 1 : i)
+            correctIndices: q.correctIndices.filter((i: number) => i !== optionIndex).map((i: number) => i > optionIndex ? i - 1 : i)
         })
     }
 
@@ -293,7 +293,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                     <input
                         type="text"
                         value={quiz.title}
-                        onChange={(e) => updateQuiz({ title: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateQuiz({ title: e.target.value })}
                         className="w-full text-xl font-semibold bg-transparent border-none outline-none text-theme-primary placeholder:text-theme-muted"
                         placeholder="Quiz Title"
                     />
@@ -310,7 +310,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                             <input
                                 type="number"
                                 value={quiz.timePerQuestion}
-                                onChange={(e) => updateQuiz({ timePerQuestion: Number(e.target.value) })}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateQuiz({ timePerQuestion: Number(e.target.value) })}
                                 className="input"
                                 min="10"
                             />
@@ -322,7 +322,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                             <label className="label">Year</label>
                             <select
                                 value={(quiz.assignedBatches && quiz.assignedBatches[0]) || ''}
-                                onChange={(e) => updateQuiz({ assignedBatches: e.target.value ? [e.target.value] : [] })}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuiz({ assignedBatches: e.target.value ? [e.target.value] : [] })}
                                 className="input"
                             >
                                 <option value="">All Years</option>
@@ -336,7 +336,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                             <label className="label">Batch</label>
                             <select
                                 value={quiz.targetSection || ''}
-                                onChange={(e) => updateQuiz({ targetSection: e.target.value || null })}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuiz({ targetSection: e.target.value || null })}
                                 className="input"
                             >
                                 <option value="">All Batches</option>
@@ -354,7 +354,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                         <label className="label">Description</label>
                         <textarea
                             value={quiz.description || ''}
-                            onChange={(e) => updateQuiz({ description: e.target.value })}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateQuiz({ description: e.target.value })}
                             className="input min-h-[60px]"
                             placeholder="Optional description..."
                         />
@@ -365,7 +365,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                             <label className="label mb-0">Mode:</label>
                             <select
                                 value={quiz.enforcementMode}
-                                onChange={(e) => updateQuiz({ enforcementMode: e.target.value })}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuiz({ enforcementMode: e.target.value })}
                                 className="input w-auto"
                             >
                                 <option value="NORMAL">Normal</option>
@@ -377,7 +377,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                 type="checkbox"
                                 id="published"
                                 checked={quiz.isPublished}
-                                onChange={(e) => updateQuiz({ isPublished: e.target.checked })}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateQuiz({ isPublished: e.target.checked })}
                                 className="w-4 h-4 accent-accent"
                             />
                             <label htmlFor="published" className="text-sm text-theme-primary">
@@ -395,7 +395,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                         </h2>
                         <div className="flex gap-2">
                             <select
-                                onChange={(e) => addQuestion(e.target.value as QuestionType)}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => addQuestion(e.target.value as QuestionType)}
                                 value=""
                                 className="input w-auto text-sm"
                             >
@@ -410,13 +410,13 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                     <Reorder.Group
                         axis="y"
                         values={questions}
-                        onReorder={(newOrder) => {
+                        onReorder={(newOrder: Question[]) => {
                             setQuestions(newOrder)
                             setHasChanges(true)
                         }}
                         className="space-y-3"
                     >
-                        {questions.map((q, index) => (
+                        {questions.map((q: Question, index: number) => (
                             <Reorder.Item key={q.id || `new-${index}`} value={q}>
                                 <motion.div
                                     layout
@@ -432,7 +432,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                                     <span className="badge badge-neutral">Q{index + 1}</span>
                                                     <select
                                                         value={q.type}
-                                                        onChange={(e) => updateQuestion(index, { type: e.target.value as QuestionType })}
+                                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuestion(index, { type: e.target.value as QuestionType })}
                                                         className="text-xs bg-theme-tertiary border-none rounded px-2 py-1 text-theme-muted"
                                                     >
                                                         {questionTypes.map(t => (
@@ -450,7 +450,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
 
                                             <textarea
                                                 value={q.text}
-                                                onChange={(e) => updateQuestion(index, { text: e.target.value })}
+                                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateQuestion(index, { text: e.target.value })}
                                                 className="input min-h-[80px]"
                                                 placeholder="Question text..."
                                                 autoFocus
@@ -465,7 +465,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                                             : 'Options (click to mark correct)'
                                                         }
                                                     </label>
-                                                    {q.options.map((opt, optIdx) => (
+                                                    {q.options.map((opt: string, optIdx: number) => (
                                                         <div key={optIdx} className="flex gap-2">
                                                             <button
                                                                 type="button"
@@ -483,7 +483,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                                             <input
                                                                 type="text"
                                                                 value={opt}
-                                                                onChange={(e) => {
+                                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                                                     const newOpts = [...q.options]
                                                                     newOpts[optIdx] = e.target.value
                                                                     updateQuestion(index, { options: newOpts })
@@ -531,7 +531,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                                     <input
                                                         type="number"
                                                         value={q.points}
-                                                        onChange={(e) => updateQuestion(index, { points: Number(e.target.value) })}
+                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateQuestion(index, { points: Number(e.target.value) })}
                                                         className="input w-20"
                                                         min="1"
                                                     />
@@ -569,7 +569,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                                     )}
                                                     {q.type === 'CHECKBOX' && (
                                                         <p className="text-sm text-success">
-                                                            ✓ {q.correctIndices?.map(i => q.options[i]).join(', ') || 'No correct answers'}
+                                                            ✓ {q.correctIndices?.map((i: number) => q.options[i]).join(', ') || 'No correct answers'}
                                                         </p>
                                                     )}
                                                     {(q.type === 'SHORT_ANSWER' || q.type === 'LONG_ANSWER') && (
@@ -578,7 +578,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                                 </div>
                                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
-                                                        onClick={(e) => {
+                                                        onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation()
                                                             duplicateQuestion(index)
                                                         }}
@@ -588,7 +588,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                                                         ⧉
                                                     </button>
                                                     <button
-                                                        onClick={(e) => {
+                                                        onClick={(e: React.MouseEvent) => {
                                                             e.stopPropagation()
                                                             deleteQuestion(index)
                                                         }}

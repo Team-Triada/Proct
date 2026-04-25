@@ -69,7 +69,7 @@ export async function GET(
 
     // Create shuffled options array with indices
     const shuffledOptions = options
-        .map((opt, idx) => ({ text: opt, originalIndex: idx }))
+        .map((opt: string, idx: number) => ({ text: opt, originalIndex: idx }))
         .sort(() => Math.random() - 0.5)
 
     return NextResponse.json({
@@ -78,8 +78,8 @@ export async function GET(
         totalQuestions: questionOrder.length,
         questionId: question.id,
         questionText: question.text,
-        options: shuffledOptions.map(o => o.text),
-        shuffleMapping: shuffledOptions.map(o => o.originalIndex),
+        options: shuffledOptions.map((o: { text: string }) => o.text),
+        shuffleMapping: shuffledOptions.map((o: { originalIndex: number }) => o.originalIndex),
         timePerQuestion: attempt.quiz.timePerQuestion,
         enforcementMode: attempt.quiz.enforcementMode,
         violationCount: attempt.violationCount,
@@ -138,7 +138,7 @@ export async function POST(
         if (selectedIndices && Array.isArray(selectedIndices)) {
             // Map shuffled indices back to original if mapping exists
             originalSelectedIndices = shuffleMapping
-                ? selectedIndices.map((i: number) => shuffleMapping[i])
+                ? selectedIndices.map((i: number) => (shuffleMapping as number[])[i])
                 : selectedIndices
 
             // Correct logic: Intersection of selected and correct
@@ -148,7 +148,7 @@ export async function POST(
             let correctMatches = 0
             let incorrectMatches = 0
 
-            selectedSet.forEach(idx => {
+            selectedSet.forEach((idx: number) => {
                 if (correctSet.has(idx)) correctMatches++
                 else incorrectMatches++
             })
@@ -224,7 +224,7 @@ export async function POST(
         // Sum up points from all answers (treating null as 0 for now)
         // Manual grading will update the attempt score later
         let score = 0
-        answers.forEach(a => {
+        answers.forEach((a: any) => {
             if (a.pointsAwarded !== null) {
                 score += a.pointsAwarded
             }

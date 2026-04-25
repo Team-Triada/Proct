@@ -84,7 +84,7 @@ export async function GET(
 
         // 4. Hide correct answers for students
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const safeQuestions = quiz.questions.map(({ correctIndex: _correctIndex, ...q }) => q)
+        const safeQuestions = quiz.questions.map(({ correctIndex: _correctIndex, ...q }: any) => q)
         return NextResponse.json({ ...quiz, questions: safeQuestions })
     }
 
@@ -148,16 +148,16 @@ export async function PUT(
             where: { quizId: id },
             select: { id: true, options: true }
         })
-        const existingMap = new Map(existingQuestions.map(q => [q.id, q.options]))
-        const existingIds = existingQuestions.map(q => q.id)
+        const existingMap = new Map(existingQuestions.map((q: { id: string, options: string | null }) => [q.id, q.options]))
+        const existingIds = existingQuestions.map((q: { id: string }) => q.id)
 
         // Identify which IDs are present in the new payload
         const payloadIds = (questions as QuestionPayload[])
-            .filter((q) => q.id)
-            .map((q) => q.id)
+            .filter((q: QuestionPayload) => q.id)
+            .map((q: QuestionPayload) => q.id as string)
 
         // Delete questions that are no longer in the payload
-        const toDelete = existingIds.filter(eid => !payloadIds.includes(eid))
+        const toDelete = existingIds.filter((eid: string) => !payloadIds.includes(eid))
         if (toDelete.length > 0) {
             // Must delete answers referencing these questions first (FK constraint)
             await prisma.answer.deleteMany({
@@ -189,7 +189,7 @@ export async function PUT(
                 // Options is undefined, null, empty array, or array of empty strings
                 // For existing questions, preserve their current options
                 if (q.id && existingMap.has(q.id)) {
-                    optionsStr = existingMap.get(q.id) || '[]'
+                    optionsStr = (existingMap.get(q.id) as string) || '[]'
                 } else {
                     // New question with no options
                     optionsStr = '[]'
