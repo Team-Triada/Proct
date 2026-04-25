@@ -102,7 +102,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
             setIsModalOpen(false)
             resetForm()
             router.refresh()
-        } catch (error) {
+        } catch {
             alert('Error saving user')
         } finally {
             setLoading(false)
@@ -126,8 +126,8 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                 const data = await res.json()
                 alert(data.error || 'Failed to delete user')
             }
-        } catch (error) {
-            console.error(error)
+        } catch {
+            console.error('Failed to delete user')
             alert('Error deleting user')
         } finally {
             setLoading(false)

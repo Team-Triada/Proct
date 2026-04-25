@@ -81,7 +81,7 @@ export default function CookiePolicyPage() {
                     <section>
                         <h2 className="font-manrope font-bold text-2xl text-[var(--text-primary)] mb-4 flex items-center gap-3">
                             <Shield className="text-emerald-500" size={24} />
-                            What We Don't Do
+                            What We Don&apos;t Do
                         </h2>
                         <div className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-6">
                             <ul className="space-y-3 text-[var(--text-secondary)]">
@@ -116,7 +116,7 @@ export default function CookiePolicyPage() {
                                 You can control cookies through your browser settings. However, disabling essential cookies will prevent you from using the platform.
                             </p>
                             <p className="text-[var(--text-secondary)] leading-relaxed">
-                                <strong className="text-[var(--text-primary)]">To clear cookies:</strong> Access your browser's privacy settings and clear site data for proct.platform.
+                                <strong className="text-[var(--text-primary)]">To clear cookies:</strong> Access your browser&apos;s privacy settings and clear site data for proct.platform.
                             </p>
                         </div>
                     </section>

@@ -60,7 +60,7 @@ export default function GradingClient({
     })
     const [saving, setSaving] = useState(false)
 
-    const handleGradeChange = (questionId: string, field: 'points' | 'feedback', value: any, maxPoints?: number) => {
+    const handleGradeChange = (questionId: string, field: 'points' | 'feedback', value: string | number, maxPoints?: number) => {
         let finalValue = value
         if (field === 'points' && maxPoints !== undefined) {
             // Clamp the value between 0 and maxPoints

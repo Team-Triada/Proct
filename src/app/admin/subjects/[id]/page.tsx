@@ -20,12 +20,12 @@ export default async function AdminSubjectDetail({
 }) {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || (session.user).role !== 'ADMIN') {
         redirect('/login')
     }
 
     const { id } = await params
-    const user = session.user as any
+    const user = session.user
 
     const subject = await prisma.subject.findUnique({
         where: { id },

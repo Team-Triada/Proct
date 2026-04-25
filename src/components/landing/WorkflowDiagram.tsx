@@ -4,7 +4,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Settings, User, FileBarChart } from 'lucide-react'
 
-const WorkflowNode = ({ icon: Icon, label, delay }: { icon: any, label: string, delay: number }) => (
+const WorkflowNode = ({ icon: Icon, label, delay }: { icon: React.ComponentType<{ size?: number; className?: string }>, label: string, delay: number }) => (
     <motion.div
         initial={{ scale: 0, opacity: 0 }}
         whileInView={{ scale: 1, opacity: 1 }}

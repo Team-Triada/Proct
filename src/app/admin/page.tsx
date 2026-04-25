@@ -15,11 +15,11 @@ const navigation = [
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || (session.user).role !== 'ADMIN') {
         redirect('/login')
     }
 
-    const user = session.user as any
+    const user = session.user
 
     // Get all subjects organized by semester
     const subjects = await prisma.subject.findMany({
@@ -38,7 +38,6 @@ export default async function AdminDashboard() {
     }, {})
 
     // Stats
-    const totalUsers = await prisma.user.count()
     const totalQuizzes = await prisma.quiz.count()
     const totalAttempts = await prisma.quizAttempt.count()
     const totalViolations = await prisma.violationLog.count()
@@ -98,7 +97,7 @@ export default async function AdminDashboard() {
                                     Semester {sem}
                                 </h3>
                                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {subjs.map((subject: any) => (
+                                    {subjs.map((subject) => (
                                         <Link
                                             key={subject.id}
                                             href={`/admin/subjects/${subject.id}`}

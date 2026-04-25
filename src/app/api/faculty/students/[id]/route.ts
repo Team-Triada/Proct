@@ -14,7 +14,7 @@ export async function PUT(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
     const { id } = await params
 
     // Only admin and faculty can access
@@ -90,8 +90,9 @@ export async function PUT(
         })
 
         return NextResponse.json(updatedStudent)
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error updating student:', error)
-        return NextResponse.json({ error: error.message || 'Failed to update student' }, { status: 500 })
+        const message = error instanceof Error ? error.message : 'Failed to update student'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }

@@ -13,7 +13,7 @@ export async function POST(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = session.user as any
+    const user = session.user
     const { id } = await params
 
     const attempt = await prisma.quizAttempt.findUnique({

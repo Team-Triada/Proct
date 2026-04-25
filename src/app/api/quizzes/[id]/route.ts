@@ -4,6 +4,16 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { normalizeBatch } from '@/lib/utils'
 
+interface QuestionPayload {
+    id?: string
+    text: string
+    type?: string
+    options?: string | string[]
+    correctIndex?: number
+    correctIndices?: string | number[]
+    points?: number
+}
+
 // GET single quiz with questions
 export async function GET(
     request: NextRequest,
@@ -15,7 +25,7 @@ export async function GET(
     }
 
     const { id } = await params
-    const user = session.user as any
+    const user = session.user
 
     const quiz = await prisma.quiz.findUnique({
         where: { id },
@@ -73,7 +83,8 @@ export async function GET(
         }
 
         // 4. Hide correct answers for students
-        const safeQuestions = quiz.questions.map(({ correctIndex, ...q }) => q)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const safeQuestions = quiz.questions.map(({ correctIndex: _correctIndex, ...q }) => q)
         return NextResponse.json({ ...quiz, questions: safeQuestions })
     }
 
@@ -96,7 +107,7 @@ export async function PUT(
     }
 
     const { id } = await params
-    const user = session.user as any
+    const user = session.user
     const body = await request.json()
 
     const quiz = await prisma.quiz.findUnique({
@@ -141,9 +152,9 @@ export async function PUT(
         const existingIds = existingQuestions.map(q => q.id)
 
         // Identify which IDs are present in the new payload
-        const payloadIds = questions
-            .filter((q: any) => q.id)
-            .map((q: any) => q.id)
+        const payloadIds = (questions as QuestionPayload[])
+            .filter((q) => q.id)
+            .map((q) => q.id)
 
         // Delete questions that are no longer in the payload
         const toDelete = existingIds.filter(eid => !payloadIds.includes(eid))
@@ -159,7 +170,7 @@ export async function PUT(
 
         // Upsert each question
         for (let index = 0; index < questions.length; index++) {
-            const q = questions[index] as any
+            const q = questions[index] as QuestionPayload
 
             // Determine options string with preservation logic
             let optionsStr: string
@@ -222,7 +233,7 @@ export async function DELETE(
     }
 
     const { id } = await params
-    const user = session.user as any
+    const user = session.user
 
     const quiz = await prisma.quiz.findUnique({
         where: { id },

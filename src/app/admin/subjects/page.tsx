@@ -16,11 +16,11 @@ const navigation = [
 export default async function AdminSubjectsPage() {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || (session.user).role !== 'ADMIN') {
         redirect('/login')
     }
 
-    const user = session.user as any
+    const user = session.user
 
     const subjects = await prisma.subject.findMany({
         include: {
@@ -37,8 +37,8 @@ export default async function AdminSubjectsPage() {
     })
 
     // Filter pending and approved subjects
-    const pendingSubjects = subjects.filter((s: any) => s.isApproved === false)
-    const approvedSubjects = subjects.filter((s: any) => s.isApproved !== false)
+    const pendingSubjects = subjects.filter((s) => s.isApproved === false)
+    const approvedSubjects = subjects.filter((s) => s.isApproved !== false)
 
     // Group approved by semester
     const bySemester = approvedSubjects.reduce((acc: Record<number, typeof subjects>, s) => {
@@ -63,7 +63,7 @@ export default async function AdminSubjectsPage() {
                             <span>⚠️</span> Pending Approval ({pendingSubjects.length})
                         </h2>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {pendingSubjects.map((subject: any) => (
+                            {pendingSubjects.map((subject) => (
                                 <div key={subject.id} className="card bg-theme-surface border-warning/30">
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
@@ -96,7 +96,7 @@ export default async function AdminSubjectsPage() {
                             </h2>
 
                             <div className="space-y-4">
-                                {subjs.map((subject: any) => (
+                                {subjs.map((subject) => (
                                     <div key={subject.id} className="card">
                                         <div className="flex items-start justify-between gap-4 mb-4">
                                             <div>
@@ -124,7 +124,7 @@ export default async function AdminSubjectsPage() {
                                                 {subject.faculty.length === 0 ? (
                                                     <span className="text-sm text-theme-muted italic">No faculty assigned</span>
                                                 ) : (
-                                                    subject.faculty.map((f: any) => (
+                                                    subject.faculty.map((f) => (
                                                         <span key={f.id} className="badge badge-neutral">
                                                             {f.name}
                                                         </span>
@@ -138,7 +138,7 @@ export default async function AdminSubjectsPage() {
                                             <div className="pt-4 border-t border-theme-subtle">
                                                 <p className="text-xs text-theme-muted uppercase tracking-wide mb-2">Quizzes</p>
                                                 <div className="space-y-2">
-                                                    {subject.quizzes.map((quiz: any) => (
+                                                    {subject.quizzes.map((quiz) => (
                                                         <div key={quiz.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-tertiary)' }}>
                                                             <div>
                                                                 <div className="flex items-center gap-2">

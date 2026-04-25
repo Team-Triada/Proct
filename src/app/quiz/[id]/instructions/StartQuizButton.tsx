@@ -19,12 +19,16 @@ export default function StartQuizButton({
     const enterFullscreen = async () => {
         try {
             const el = document.documentElement
+            const webkitEl = el as HTMLElement & {
+                webkitRequestFullscreen?: () => Promise<void>
+                msRequestFullscreen?: () => Promise<void>
+            }
             if (el.requestFullscreen) {
                 await el.requestFullscreen()
-            } else if ((el as any).webkitRequestFullscreen) {
-                await (el as any).webkitRequestFullscreen()
-            } else if ((el as any).msRequestFullscreen) {
-                await (el as any).msRequestFullscreen()
+            } else if (webkitEl.webkitRequestFullscreen) {
+                await webkitEl.webkitRequestFullscreen()
+            } else if (webkitEl.msRequestFullscreen) {
+                await webkitEl.msRequestFullscreen()
             }
         } catch (e) {
             console.warn('Fullscreen request failed:', e)

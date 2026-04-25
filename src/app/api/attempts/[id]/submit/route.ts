@@ -14,7 +14,7 @@ export async function POST(
     }
 
     const { id } = await params
-    const user = session.user as any
+    const user = session.user
 
     const attempt = await prisma.quizAttempt.findUnique({
         where: { id },

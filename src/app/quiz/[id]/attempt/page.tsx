@@ -10,7 +10,7 @@ export default async function QuizAttemptPage({
 }) {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'STUDENT') {
+    if (!session || (session.user).role !== 'STUDENT') {
         redirect('/login')
     }
 

@@ -14,11 +14,11 @@ const navigation = [
 export default async function QuizDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'FACULTY') {
+    if (!session || (session.user).role !== 'FACULTY') {
         redirect('/login')
     }
 
-    const user = session.user as any
+    const user = session.user
     const { id } = await params
 
     const quiz = await prisma.quiz.findUnique({
@@ -41,9 +41,9 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
         redirect('/faculty/quizzes')
     }
 
-    const completedAttempts = quiz.attempts.filter((a: any) => a.status !== 'IN_PROGRESS')
+    const completedAttempts = quiz.attempts.filter((a) => a.status !== 'IN_PROGRESS')
     const avgScore = completedAttempts.length > 0
-        ? completedAttempts.reduce((acc: number, a: any) => acc + (a.score / a.totalPoints * 100), 0) / completedAttempts.length
+        ? completedAttempts.reduce((acc: number, a) => acc + (a.score / a.totalPoints * 100), 0) / completedAttempts.length
         : 0
 
     return (
@@ -93,7 +93,7 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
                     <div className="card">
                         <div className="stat">
                             <span className="stat-value text-danger">
-                                {quiz.attempts.reduce((acc: number, a: any) => acc + a.violations.length, 0)}
+                                {quiz.attempts.reduce((acc: number, a) => acc + a.violations.length, 0)}
                             </span>
                             <span className="stat-label">Violations</span>
                         </div>
@@ -125,7 +125,7 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {quiz.attempts.map((attempt: any) => (
+                                    {quiz.attempts.map((attempt) => (
                                         <tr key={attempt.id}>
                                             <td className="font-medium">{attempt.student.name}</td>
                                             <td className="text-theme-muted">{attempt.student.rollNumber}</td>

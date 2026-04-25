@@ -6,7 +6,7 @@ import EditQuizClient from './EditQuizClient'
 export default async function EditQuizPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session.user as any).role !== 'FACULTY') {
+    if (!session || (session.user).role !== 'FACULTY') {
         redirect('/login')
     }
 
