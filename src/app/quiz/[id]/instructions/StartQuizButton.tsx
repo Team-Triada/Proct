@@ -80,7 +80,7 @@ export default function StartQuizButton({
                     </Checkbox.Indicator>
                 </Checkbox.Root>
                 <span className="text-xs text-[var(--text-muted)]">
-                    I agree to follow the quiz rules. The quiz will open in fullscreen mode.
+                    I agree to follow the quiz rules. The quiz will open in fullscreen mode (if supported by your device).
                 </span>
             </label>
 

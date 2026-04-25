@@ -541,6 +541,15 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     useEffect(() => {
         if (!attemptId || completed) return
 
+        // Check if the browser actually supports fullscreen on the document element (e.g. iPhones do not)
+        const el = document.documentElement
+        const canFullscreen = !!(el.requestFullscreen || (el as any).webkitRequestFullscreen || (el as any).msRequestFullscreen)
+        
+        if (!canFullscreen) {
+            setIsFullscreen(true) // Bypass enforcement if unsupported
+            return
+        }
+
         const handleFullscreenChange = () => {
             const doc = document as Document & { webkitFullscreenElement?: Element | null }
             const isFs = !!(doc.fullscreenElement || doc.webkitFullscreenElement)
