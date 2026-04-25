@@ -36,6 +36,7 @@ Proct is a modern quiz platform built for educational institutions that prioriti
 ## ✨ Features
 
 ### For Students
+
 - 📝 Clean, distraction-free quiz interface
 - ⏱️ Per-question timers with auto-save
 - 📱 Mobile-optimized experience
@@ -43,6 +44,7 @@ Proct is a modern quiz platform built for educational institutions that prioriti
 - 📊 Instant score feedback
 
 ### For Faculty
+
 - ✏️ Create quizzes with 5 question types:
   - Multiple Choice
   - Checkbox (Multi-select)
@@ -55,19 +57,24 @@ Proct is a modern quiz platform built for educational institutions that prioriti
 - 📋 View detailed attempt analytics
 
 ### For Admins
+
 - 👥 Complete user management
 - 📚 Subject approval workflow
 - 📊 Platform-wide analytics
 - ⚙️ System configuration
 
 ### Integrity Features
+
 - 🚫 Tab switch detection
+- 📺 Strict Fullscreen enforcement
 - 📋 Copy/paste prevention
 - 🔒 Question randomization
 - ⚠️ Violation logging
 - 🛑 Auto-submit on violations
+- 📺 Fullscreen exit blocking
 
 ### Security & Management
+
 - 🔐 **Enhanced Registration**: Strict email domain (`@yenepoya.edu.in`), Campus ID, and password policy enforcement.
 - 🗑️ **Robust Deletion**: Safe cascade deletion for users, ensuring all related attempts and data are cleaned up without errors.
 - ⚠️ **Action Warnings**: Confirmation modals for critical actions like deletion.
@@ -91,6 +98,7 @@ Proct is a modern quiz platform built for educational institutions that prioriti
 ## 🚀 Installation
 
 ### Prerequisites
+
 - Node.js 18+
 - MySQL 8.0+
 - npm or yarn
@@ -140,6 +148,7 @@ NEXTAUTH_URL="http://localhost:3000"
 ## 📖 Usage
 
 ### Initial Access
+
 1. **Admin Login**:
    - Email: `admin@college.edu`
    - Password: `admin123`
@@ -152,6 +161,7 @@ NEXTAUTH_URL="http://localhost:3000"
      - Strong password (8+ chars, upper, lower, number, special).
 
 ### Creating a Quiz
+
 1. Login as Faculty
 2. Navigate to **Create Quiz**
 3. Select subject and add questions
@@ -172,9 +182,11 @@ NEXTAUTH_URL="http://localhost:3000"
 ## 📡 API Reference
 
 ### Authentication
+
 - `POST /api/auth/[...nextauth]` - NextAuth endpoints
 
 ### Quizzes
+
 - `GET /api/quizzes` - List quizzes
 - `POST /api/quizzes` - Create quiz
 - `GET /api/quizzes/[id]` - Get quiz details
@@ -183,6 +195,7 @@ NEXTAUTH_URL="http://localhost:3000"
 - `POST /api/quizzes/[id]/start` - Start attempt
 
 ### Attempts
+
 - `GET /api/attempts/[id]` - Get current question
 - `POST /api/attempts/[id]` - Submit answer
 - `POST /api/attempts/[id]/save` - Save progress
@@ -191,6 +204,7 @@ NEXTAUTH_URL="http://localhost:3000"
 - `POST /api/attempts/grade` - Faculty grading
 
 ### Admin
+
 - `GET/POST /api/admin/users` - User management
 - `PUT/DELETE /api/admin/users/[id]` - Update/delete user
 - `POST /api/subjects/[id]/approve` - Approve subject
@@ -248,6 +262,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 ## Team Triada
+
 Made by Team Triada
 
 ---

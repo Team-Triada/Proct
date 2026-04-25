@@ -31,7 +31,7 @@ export default function ContactPage() {
                         </div>
                         <div className="pt-8 border-t border-[var(--border-subtle)]">
                             <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Contact Sales</p>
-                            <a href="mailto:sales@proct.platform" className="text-lg font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors flex items-center gap-2">
+                            <a href="mailto:triadactf@gmail.com" className="text-lg font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors flex items-center gap-2">
                                 <Mail size={18} />
                                 triadactf@gmail.com
                             </a>
@@ -50,7 +50,7 @@ export default function ContactPage() {
                         </div>
                         <div className="pt-8 border-t border-[var(--border-subtle)]">
                             <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Get in Touch</p>
-                            <a href="mailto:contact@proct.platform" className="text-lg font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors flex items-center gap-2">
+                            <a href="mailto:triadactf@gmail.com" className="text-lg font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors flex items-center gap-2">
                                 <MessageSquare size={18} />
                                 triadactf@gmail.com
                             </a>

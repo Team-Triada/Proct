@@ -53,7 +53,8 @@ export default function PrivacyPage() {
                                 <li className="text-[var(--text-secondary)]">• Role (Admin, Faculty, Student)</li>
                                 <li className="text-[var(--text-secondary)]">• Academic identifiers (department, semester, batch)</li>
                                 <li className="text-[var(--text-secondary)]">• Quiz attempts, answers, and timestamps</li>
-                                <li className="text-[var(--text-secondary)]">• Rule violation events (tab switch logs)</li>
+                                <li className="text-[var(--text-secondary)]">• Rule violation events (tab switch, fullscreen exit logs)</li>
+                                <li className="text-[var(--text-secondary)]">• Device state (fullscreen mode status)</li>
                             </ul>
                         </div>
                     </section>

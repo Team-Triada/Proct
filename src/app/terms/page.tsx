@@ -65,6 +65,7 @@ export default function TermsPage() {
                                 <li>• Access quizzes not assigned to their academic cohort</li>
                                 <li>• Impersonate another user or provide false credentials</li>
                                 <li>• Interfere with the platform&apos;s functionality or security</li>
+                                <li>• Disable or circumvent fullscreen enforcement mode during assessments</li>
                             </ul>
                         </div>
                     </section>

@@ -129,6 +129,11 @@ export default function DocsPage() {
                                     desc="Faculty can create new subjects (e.g., 'Advanced AI') and create quizzes."
                                     icon={<CheckCircle />}
                                 />
+                                <FeatureCard
+                                    title="Strict Fullscreen Mode"
+                                    desc="Quizzes launch in fullscreen. Exiting logs a violation and blocks the interface until re-entered."
+                                    icon={<Shield />}
+                                />
                             </div>
                         </section>
 
@@ -176,7 +181,7 @@ export default function DocsPage() {
                                 steps={[
                                     { label: "Dashboard", desc: "View quizzes for your Semester", icon: <Users /> },
                                     { label: "Validation", desc: "System checks your Year/Batch", icon: <Shield /> },
-                                    { label: "Attempt", desc: "Answer Qs one by one. Timer ticks.", icon: <Clock /> },
+                                    { label: "Attempt", desc: "Enter Fullscreen. Answer Qs one by one. Timer ticks.", icon: <Clock /> },
                                     { label: "Auto-Submit", desc: "Ends on timeout or completion", icon: <CheckCircle /> },
                                     { label: "Result", desc: "Instant score (if enabled)", icon: <FileText /> }
                                 ]}
@@ -215,6 +220,7 @@ export default function DocsPage() {
                                         <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-[var(--success)] mt-0.5" /> <strong>Reference Time:</strong> Server-side time prevents changing device clock.</li>
                                         <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-[var(--success)] mt-0.5" /> <strong>One-Way Hash:</strong> Answers are verified on server, never exposed to client.</li>
                                         <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-[var(--success)] mt-0.5" /> <strong>Strict Blur:</strong> (Optional) Logs when user switches tabs.</li>
+                                        <li className="flex gap-2 items-start"><CheckCircle size={16} className="text-[var(--success)] mt-0.5" /> <strong>Fullscreen Enforcement:</strong> Blocks potential cheating by enforcing full screen context.</li>
                                     </ul>
                                 </div>
                             </div>
