@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -19,23 +19,22 @@ export const Navbar = () => {
                 transition={{ duration: 0.6 }}
                 className="fixed top-0 left-0 right-0 z-50 h-20 flex items-center"
             >
-                <div className="absolute inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-subtle)]" />
-                <div className="container mx-auto px-6 relative z-10 flex items-center justify-between">
+                <div className="absolute inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-[var(--border-subtle)]" />
+                <div className="page-container relative z-10 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3" onClick={() => setIsOpen(false)}>
                         <div className="w-8 h-8 relative">
                             <Image src="/icon.png" alt="Proct" fill className="object-contain" />
                         </div>
-                        <span className="font-manrope font-bold text-[var(--text-primary)] text-lg tracking-tight">Proct</span>
+                        <span className="font-jakarta font-bold text-[var(--text-primary)] text-lg tracking-tight">Proct</span>
                     </Link>
 
                     {/* Desktop Menu */}
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/about" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">About</Link>
-                        <Link href="/docs" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Docs</Link>
-                        <Link href="/#features" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Features</Link>
-                        <Link href="/faq" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">FAQ</Link>
-                        <Link href="/support" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Support</Link>
-                        <Link href="/contact" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Contact</Link>
+                        <Link href="/about" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors tracking-wide">About</Link>
+                        <Link href="/docs" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors tracking-wide">Docs</Link>
+                        <Link href="/faq" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors tracking-wide">FAQ</Link>
+                        <Link href="/support" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors tracking-wide">Support</Link>
+                        <Link href="/contact" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors tracking-wide">Contact</Link>
 
                         {/* Theme Toggle */}
                         <button
@@ -56,10 +55,14 @@ export const Navbar = () => {
                             </motion.div>
                         </button>
 
-                        <Link href="/login">
-                            <button className="bg-[var(--accent)] hover:bg-[var(--accent-muted)] text-white px-6 py-2.5 rounded-full text-sm font-medium transition-colors shadow-lg shadow-[var(--accent)]/20">
-                                Sign In
-                            </button>
+                        <Link href="/login?tab=register" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors tracking-wide">
+                            Register
+                        </Link>
+                        <Link
+                            href="/login"
+                            className="bg-[var(--accent)] hover:bg-[var(--accent-muted)] text-white px-6 py-2.5 rounded-full text-sm font-medium transition-all shadow-[0_0_20px_-4px_rgba(224,62,62,0.4)] hover:shadow-[0_0_30px_-4px_rgba(224,62,62,0.5)] ring-1 ring-white/10"
+                        >
+                            Sign In
                         </Link>
                     </div>
 
@@ -101,14 +104,16 @@ export const Navbar = () => {
                         <div className="flex flex-col gap-6 text-center">
                             <Link href="/about" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">About</Link>
                             <Link href="/docs" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">Docs</Link>
-                            <Link href="/#features" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">Features</Link>
                             <Link href="/faq" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">FAQ</Link>
                             <Link href="/support" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">Support</Link>
                             <Link href="/contact" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">Contact</Link>
-                            <Link href="/login" onClick={() => setIsOpen(false)}>
-                                <button className="w-full mt-4 bg-[var(--accent)] hover:bg-[var(--accent-muted)] text-white py-4 rounded-xl font-bold transition-colors">
-                                    Sign In
-                                </button>
+                            <Link href="/login?tab=register" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">Register</Link>
+                            <Link
+                                href="/login"
+                                onClick={() => setIsOpen(false)}
+                                className="w-full mt-4 bg-[var(--accent)] hover:bg-[var(--accent-muted)] text-white py-4 rounded-xl font-bold transition-colors shadow-[0_0_30px_-4px_rgba(224,62,62,0.4)] flex items-center justify-center"
+                            >
+                                Sign In
                             </Link>
                         </div>
                     </motion.div>

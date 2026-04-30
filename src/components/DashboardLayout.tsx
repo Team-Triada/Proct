@@ -24,8 +24,8 @@ export default function DashboardLayout({ children, user, navigation }: Dashboar
     return (
         <div className="min-h-screen bg-theme">
             {/* Header */}
-            <header className="sticky top-0 z-40 border-b border-theme-subtle bg-theme-primary">
-                <div className="max-w-5xl mx-auto px-6">
+            <header className="sticky top-0 z-40 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-xl">
+                <div className="page-container">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
                         <Link href="/" className="flex items-center">
@@ -40,11 +40,14 @@ export default function DashboardLayout({ children, user, navigation }: Dashboar
                                     <Link
                                         key={item.href}
                                         href={item.href}
-                                        className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive
-                                            ? 'text-theme-primary bg-theme-tertiary'
-                                            : 'text-theme-muted hover:text-theme-secondary hover:bg-theme-tertiary/50'
+                                        className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all ${isActive
+                                            ? 'text-theme-primary bg-[var(--bg-tertiary)] border border-[var(--border-subtle)]'
+                                            : 'text-theme-muted hover:text-theme-secondary hover:bg-[var(--bg-secondary)]'
                                             }`}
                                     >
+                                        {isActive && (
+                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-[var(--accent)]" />
+                                        )}
                                         {item.name}
                                     </Link>
                                 )
@@ -56,7 +59,7 @@ export default function DashboardLayout({ children, user, navigation }: Dashboar
                             <ThemeToggle />
                             <Link href="/profile" className="text-right hidden sm:block hover:opacity-80 transition-opacity">
                                 <p className="text-sm font-medium text-theme-primary">{user.name}</p>
-                                <p className="text-xs text-theme-muted">{user.rollNumber || user.role}</p>
+                                <p className="eyebrow">{user.rollNumber || user.role}</p>
                             </Link>
                             <button
                                 onClick={() => signOut({ callbackUrl: '/login' })}
@@ -79,8 +82,8 @@ export default function DashboardLayout({ children, user, navigation }: Dashboar
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${isActive
-                                        ? 'text-theme-primary bg-theme-tertiary'
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${isActive
+                                        ? 'text-theme-primary bg-[var(--bg-tertiary)] border border-[var(--border-subtle)]'
                                         : 'text-theme-muted hover:text-theme-secondary'
                                         }`}
                                 >
@@ -93,7 +96,7 @@ export default function DashboardLayout({ children, user, navigation }: Dashboar
             </header>
 
             {/* Content */}
-            <main className="max-w-5xl mx-auto px-6 py-8">
+            <main className="page-container py-8">
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}

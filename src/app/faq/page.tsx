@@ -1,9 +1,11 @@
-'use client'
-
-import React from 'react'
+import type { Metadata } from 'next'
 import { Navbar } from '@/components/landing/Navbar'
 import { Footer } from '@/components/landing/Footer'
-import { HelpCircle } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'FAQ | Proct — Common Questions Answered',
+  description: 'Answers to common questions about Proct\'s assessment platform, privacy approach, device support, and academic integrity features.',
+}
 
 const FAQS = [
     {
@@ -37,26 +39,56 @@ export default function FAQPage() {
         <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent)]/30 font-inter">
             <Navbar />
 
-            <main className="pt-32 pb-20 container mx-auto px-6 max-w-4xl">
-                <div className="text-center mb-16">
-                    <h1 className="font-manrope font-extrabold text-4xl md:text-5xl mb-4 tracking-tight">Frequently Asked Questions</h1>
-                    <p className="text-[var(--text-muted)]">Common questions about Proct&apos;s philosophy and features.</p>
-                </div>
+            <main className="pt-32 pb-20">
+                {/* Brutalist Hero */}
+                <section className="container mx-auto px-6 max-w-[1600px] pb-20 border-b border-[var(--border-subtle)]">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 mb-8 border border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs font-mono font-bold tracking-widest uppercase">
+                        <div className="w-1.5 h-1.5 bg-white rounded-none" />
+                        Inquiries
+                    </div>
+                    <h1 className="font-jakarta font-black text-5xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-tighter text-[var(--text-primary)] mb-6 uppercase">
+                        FAQ.
+                    </h1>
+                </section>
 
-                <div className="grid gap-6">
-                    {FAQS.map((faq, i) => (
-                        <div key={i} className="p-8 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:bg-[var(--bg-tertiary)] transition-colors">
-                            <h3 className="font-manrope font-bold text-lg text-[var(--text-primary)] mb-3 flex items-start gap-3">
-                                <HelpCircle className="text-[var(--text-muted)] mt-1 shrink-0" size={18} />
-                                {faq.q}
-                            </h3>
-                            <p className="text-[var(--text-muted)] text-base leading-relaxed pl-8">
-                                {faq.a}
-                            </p>
+                <div className="container mx-auto px-6 max-w-[1600px] py-12">
+                    <div className="grid lg:grid-cols-12 gap-12 lg:gap-20">
+                        {/* Left Column */}
+                        <div className="lg:col-span-4">
+                            <div className="sticky top-32">
+                                <h2 className="font-jakarta font-black text-3xl md:text-4xl tracking-tighter uppercase mb-6">
+                                    Knowledge<br/>Base
+                                </h2>
+                                <p className="text-[var(--text-muted)] font-mono text-sm leading-relaxed border-l border-[var(--accent)] pl-4">
+                                    Common inquiries regarding system capabilities, privacy parameters, and structural constraints.
+                                </p>
+                            </div>
                         </div>
-                    ))}
-                </div>
 
+                        {/* Right Column - FAQ Grid */}
+                        <div className="lg:col-span-8">
+                            <div className="border-t border-[var(--border-subtle)]">
+                                {FAQS.map((faq, i) => (
+                                    <div key={i} className="py-8 border-b border-[var(--border-subtle)] group">
+                                        <div className="flex items-start gap-6">
+                                            <div className="font-mono text-xs font-bold text-[var(--text-muted)] mt-1.5">
+                                                {String(i + 1).padStart(2, '0')}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-jakarta font-bold text-xl md:text-2xl text-[var(--text-primary)] mb-4 uppercase tracking-tight group-hover:text-[var(--accent)] transition-colors">
+                                                    {faq.q}
+                                                </h3>
+                                                <p className="text-[var(--text-muted)] font-mono text-sm leading-relaxed max-w-2xl">
+                                                    {faq.a}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
 
             <Footer />

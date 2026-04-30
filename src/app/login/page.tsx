@@ -1,14 +1,131 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
+import Image from 'next/image'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import { 
+    Shield, 
+    Lock, 
+    FileText, 
+    Zap, 
+    Users, 
+    Search,
+    Quote
+} from 'lucide-react'
 import Logo from '@/components/Logo'
 import ThemeToggle from '@/components/ThemeToggle'
 
-export default function LoginPage() {
+// ─── Left Panel ──────────────────────────────────────────────────────────────
+
+function BrandPanel() {
+    const highlights = [
+        { 
+            icon: Shield, 
+            label: 'Structural Integrity', 
+            desc: 'Linear navigation and strict timing prevent student collaboration.',
+            color: 'var(--accent)'
+        },
+        { 
+            icon: Lock, 
+            label: 'Granular Control', 
+            desc: 'Target specific batches and academic years with surgical precision.',
+            color: 'var(--neon-blue)'
+        },
+        { 
+            icon: FileText, 
+            label: 'Audit Readiness', 
+            desc: 'Comprehensive logs and anomaly detection for every attempt.',
+            color: 'var(--success)'
+        },
+    ]
+
+    return (
+        <div className="relative flex flex-col justify-between h-full p-12 xl:p-16 overflow-hidden select-none bg-gradient-to-br from-[var(--bg-secondary)] via-[var(--bg-secondary)] to-[var(--bg-primary)] border-r border-[var(--border-subtle)]">
+            {/* Glow blobs */}
+            <div className="absolute -top-24 -left-24 w-[400px] h-[400px] bg-[var(--accent)] opacity-[0.07] blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-[var(--neon-blue)] opacity-[0.05] blur-[100px] rounded-full pointer-events-none" />
+
+            {/* Logo */}
+            <div className="relative z-10 flex items-center gap-3">
+                <div className="w-10 h-10 relative">
+                    <Image src="/icon.png" alt="Proct" fill className="object-contain" />
+                </div>
+                <span className="font-jakarta font-black text-2xl tracking-tighter text-[var(--text-primary)] uppercase">
+                    Proct<span className="text-[var(--accent)]">.</span>
+                </span>
+            </div>
+
+            {/* Main Content */}
+            <div className="relative z-10">
+                <div className="space-y-12">
+                    <div className="space-y-6">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 border border-[var(--accent)]/30 bg-[var(--accent)]/5 text-[var(--accent)] text-[10px] font-mono font-bold tracking-[0.2em] uppercase">
+                            <div className="w-1.5 h-1.5 bg-[var(--accent)] rounded-none" />
+                            Integrity Engine
+                        </div>
+                        <h1 className="font-jakarta font-extrabold text-4xl xl:text-5xl text-[var(--text-primary)] leading-[1.1] tracking-tight uppercase">
+                            FAIR ASSESSMENTS,<br />
+                            <span className="text-[var(--text-muted)]">BY DESIGN.</span>
+                        </h1>
+                    </div>
+
+                    {/* Features */}
+                    <div className="space-y-8">
+                        {highlights.map((h, i) => (
+                            <div key={i} className="flex gap-5 group">
+                                <div className="w-10 h-10 shrink-0 border border-[var(--border-subtle)] bg-[var(--bg-primary)] flex items-center justify-center transition-colors group-hover:border-[var(--accent)]/30">
+                                    <h.icon size={18} className="text-[var(--text-secondary)] transition-colors group-hover:text-[var(--accent)]" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="font-jakarta font-bold text-sm text-[var(--text-primary)] uppercase tracking-tight">
+                                        {h.label}
+                                    </h3>
+                                    <p className="font-mono text-xs text-[var(--text-muted)] leading-relaxed max-w-xs">
+                                        {h.desc}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Quote */}
+                    <div className="pt-12 border-t border-[var(--border-subtle)] relative">
+                        <Quote className="absolute -top-3 left-6 text-[var(--border-subtle)] opacity-50" size={24} />
+                        <blockquote className="space-y-3">
+                            <p className="font-mono text-sm text-[var(--text-secondary)] leading-relaxed italic">
+                                &ldquo;The measure of intelligence is the ability to change.&rdquo;
+                            </p>
+                            <footer className="flex items-center gap-2">
+                                <div className="w-4 h-px bg-[var(--accent)]" />
+                                <cite className="font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)] not-italic">
+                                    Albert Einstein
+                                </cite>
+                            </footer>
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div className="relative z-10 flex items-center justify-between">
+                <p className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-widest">
+                    v1.0.0 &copy; {new Date().getFullYear()}
+                </p>
+                <div className="h-px flex-1 mx-6 bg-[var(--border-subtle)]" />
+                <p className="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-widest">
+                    TRIADA SYSTEMS
+                </p>
+            </div>
+        </div>
+    )
+}
+
+// ─── Login Form ───────────────────────────────────────────────────────────────
+
+function LoginForm({ onSwitch }: { onSwitch: () => void }) {
     const router = useRouter()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -16,243 +133,371 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setError('')
         setLoading(true)
-
         try {
-            const result = await signIn('credentials', {
-                email,
-                password,
-                redirect: false,
-            })
-
-            if (result?.error) {
-                setError('Invalid credentials')
-                setLoading(false)
-                return
-            }
-
+            const result = await signIn('credentials', { email, password, redirect: false })
+            if (result?.error) { setError('Invalid email or password'); setLoading(false); return }
             const res = await fetch('/api/auth/session')
             const session = await res.json()
-
-            if (session?.user?.role === 'ADMIN') {
-                router.push('/admin')
-            } else if (session?.user?.role === 'FACULTY') {
-                router.push('/faculty')
-            } else {
-                router.push('/student')
-            }
+            if (session?.user?.role === 'ADMIN') router.push('/admin')
+            else if (session?.user?.role === 'FACULTY') router.push('/faculty')
+            else router.push('/student')
         } catch {
             setError('Something went wrong')
             setLoading(false)
         }
     }
 
+    return (
+        <motion.div key="login" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Email */}
+                <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Email</label>
+                    <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        </span>
+                        <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                            style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                            placeholder="you@yenepoya.edu.in" required />
+                    </div>
+                </div>
 
+                {/* Password */}
+                <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Password</label>
+                    <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        </span>
+                        <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                            className="w-full pl-10 pr-11 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                            style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                            placeholder="••••••••" required />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 hover:opacity-70 transition-opacity"
+                            style={{ color: 'var(--text-muted)' }}>
+                            {showPassword
+                                ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                                : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            }
+                        </button>
+                    </div>
+                </div>
+
+                {/* Error */}
+                <AnimatePresence>
+                    {error && (
+                        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                            className="p-3 rounded-xl text-sm text-center pill-red font-mono text-xs">
+                            {error}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Submit */}
+                <button type="submit" disabled={loading}
+                    className="w-full py-3.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'var(--accent)', boxShadow: '0 0 24px -4px rgba(224,62,62,0.35)' }}>
+                    {loading
+                        ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        : <>Sign in <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></>
+                    }
+                </button>
+            </form>
+
+            <p className="mt-5 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                No account yet?{' '}
+                <button onClick={onSwitch} className="font-semibold transition-colors hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                    Create one
+                </button>
+            </p>
+        </motion.div>
+    )
+}
+
+// ─── Register Form ────────────────────────────────────────────────────────────
+
+function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
+    const router = useRouter()
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', rollNumber: '', campusId: '', batch: '', semester: '', section: '' })
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+
+    const validate = () => {
+        if (!formData.email.toLowerCase().endsWith('@yenepoya.edu.in')) return 'Email must be a @yenepoya.edu.in address'
+        if (!/^\d{5}$/.test(formData.campusId)) return 'Campus ID must be exactly 5 digits'
+        if (formData.password.length < 8) return 'Password must be at least 8 characters'
+        if (!/[a-z]/.test(formData.password)) return 'Password needs a lowercase letter'
+        if (!/[A-Z]/.test(formData.password)) return 'Password needs an uppercase letter'
+        if (!/[0-9]/.test(formData.password)) return 'Password needs a number'
+        if (!/[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'/`~]/.test(formData.password)) return 'Password needs a special character'
+        return null
+    }
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setError('')
+        const err = validate()
+        if (err) { setError(err); return }
+        setLoading(true)
+        try {
+            const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+            const data = await res.json()
+            if (!res.ok) { setError(data.error || 'Registration failed'); setLoading(false); return }
+            const loginResult = await signIn('credentials', { email: formData.email, password: formData.password, redirect: false })
+            if (loginResult?.error) {
+                setError('Account created but sign-in failed. Please sign in manually.')
+                setLoading(false)
+                return
+            }
+            router.push('/student')
+        } catch {
+            setError('Something went wrong')
+            setLoading(false)
+        }
+    }
+
+    const inputClass = "w-full pl-10 pr-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+    const inputStyle = { background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }
+    const labelClass = "block text-xs font-semibold uppercase tracking-widest mb-1.5"
+    const labelStyle = { color: 'var(--text-muted)' }
+
+    const IconUser = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+    const IconEmail = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+    const IconLock = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+    const IconId = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" /></svg>
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300"
-            style={{ background: 'var(--bg-primary)' }}>
+        <motion.div key="register" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }}>
+            <form onSubmit={handleSubmit} className="space-y-3">
+                {/* Name */}
+                <div>
+                    <label className={labelClass} style={labelStyle}>Full Name</label>
+                    <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}><IconUser /></span>
+                        <input type="text" name="name" value={formData.name} onChange={handleChange} className={inputClass} style={inputStyle} placeholder="Your full name" required />
+                    </div>
+                </div>
 
-            {/* Theme Toggle - Fixed Top Right */}
-            <div className="fixed top-6 right-6 z-50">
-                <div className="p-1.5 rounded-xl backdrop-blur-md transition-colors"
-                    style={{
-                        background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-subtle)'
-                    }}>
+                {/* Email */}
+                <div>
+                    <label className={labelClass} style={labelStyle}>Email</label>
+                    <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}><IconEmail /></span>
+                        <input type="email" name="email" value={formData.email} onChange={handleChange} className={inputClass} style={inputStyle} placeholder="campusid@yenepoya.edu.in" required />
+                    </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                    <label className={labelClass} style={labelStyle}>Password</label>
+                    <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}><IconLock /></span>
+                        <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange}
+                            className={`${inputClass} pr-11`} style={inputStyle} placeholder="Min 8 chars, A-z 0-9 special" required minLength={8} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 hover:opacity-70 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                            {showPassword
+                                ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                                : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            }
+                        </button>
+                    </div>
+                </div>
+
+                {/* Roll Number */}
+                <div>
+                    <label className={labelClass} style={labelStyle}>Registration Number</label>
+                    <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}><IconId /></span>
+                        <input type="text" name="rollNumber" value={formData.rollNumber} onChange={handleChange} className={inputClass} style={inputStyle} placeholder="e.g. 23BBCCED009" required />
+                    </div>
+                </div>
+
+                {/* Campus ID */}
+                <div>
+                    <label className={labelClass} style={labelStyle}>Campus ID</label>
+                    <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" /></svg>
+                        </span>
+                        <input type="text" name="campusId" value={formData.campusId} onChange={handleChange} className={inputClass} style={inputStyle} placeholder="5 digits (e.g. 12345)" pattern="\d{5}" maxLength={5} required />
+                    </div>
+                </div>
+
+                {/* Year + Semester */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className={labelClass} style={labelStyle}>Year</label>
+                        <select name="batch" value={formData.batch} onChange={handleChange}
+                            className="w-full px-3 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)] appearance-none cursor-pointer"
+                            style={{ ...inputStyle, color: formData.batch ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
+                            <option value="">Year</option>
+                            <option value="2023-26">2023-26</option>
+                            <option value="2024-27">2024-27</option>
+                            <option value="2025-28">2025-28</option>
+                            <option value="2026-29">2026-29</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className={labelClass} style={labelStyle}>Semester</label>
+                        <select name="semester" value={formData.semester} onChange={handleChange}
+                            className="w-full px-3 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)] appearance-none cursor-pointer"
+                            style={{ ...inputStyle, color: formData.semester ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
+                            <option value="">Sem</option>
+                            {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Sem {s}</option>)}
+                        </select>
+                    </div>
+                </div>
+
+                {/* Batch */}
+                <div>
+                    <label className={labelClass} style={labelStyle}>Batch</label>
+                    <select name="section" value={formData.section} onChange={handleChange}
+                        className="w-full px-3 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)] appearance-none cursor-pointer"
+                        style={{ ...inputStyle, color: formData.section ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
+                        <option value="">Select Batch</option>
+                        {[1,2,3,4,5,6,7,8,9,10,11,12,13].map(n => <option key={n} value={String(n)}>Batch {n}</option>)}
+                    </select>
+                </div>
+
+                {/* Error */}
+                <AnimatePresence>
+                    {error && (
+                        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                            className="p-3 rounded-xl text-xs text-center pill-red font-mono">
+                            {error}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Submit */}
+                <button type="submit" disabled={loading}
+                    className="w-full py-3.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'var(--accent)', boxShadow: '0 0 24px -4px rgba(224,62,62,0.35)' }}>
+                    {loading
+                        ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        : <>Create Account <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></>
+                    }
+                </button>
+            </form>
+
+            <p className="mt-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                Already have an account?{' '}
+                <button onClick={onSwitch} className="font-semibold transition-colors hover:opacity-80" style={{ color: 'var(--accent)' }}>
+                    Sign in
+                </button>
+            </p>
+        </motion.div>
+    )
+}
+
+// ─── Page inner (needs Suspense for useSearchParams) ─────────────────────────
+
+function LoginPageInner() {
+    const searchParams = useSearchParams()
+    const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login'
+    const [tab, setTab] = useState<'login' | 'register'>(initialTab as 'login' | 'register')
+
+    return (
+        <div className="min-h-screen flex" style={{ background: 'var(--bg-primary)', fontFamily: 'var(--font-manrope)' }}>
+
+            {/* Theme toggle */}
+            <div className="fixed top-5 right-5 z-50">
+                <div className="p-1.5 rounded-xl backdrop-blur-xl transition-colors"
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
                     <ThemeToggle />
                 </div>
             </div>
 
-            {/* Background glow effects */}
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 transition-opacity duration-500"
-                style={{ background: 'var(--accent)' }} />
-            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full blur-3xl opacity-10 transition-opacity duration-500"
-                style={{ background: '#22c55e' }} />
+            {/* Left branded panel — hidden on mobile */}
+            <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] flex-col">
+                <BrandPanel />
+            </div>
 
-            {/* Main Card */}
-            <motion.div
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="w-full max-w-md relative"
-            >
-                {/* Glassmorphic card */}
-                <div className="rounded-3xl p-8 backdrop-blur-xl relative overflow-hidden transition-colors duration-300"
-                    style={{
-                        background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-subtle)',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-                    }}>
+            {/* Divider */}
+            <div className="hidden lg:block w-px" style={{ background: 'var(--border-subtle)' }} />
 
-                    {/* Top accent line */}
-                    <div className="absolute top-0 left-8 right-8 h-[2px] rounded-full"
-                        style={{ background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }} />
-
-                    {/* Logo */}
-                    <div className="flex justify-center mb-6">
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.2, duration: 0.4 }}
-                        >
-                            <Logo width={140} height={46} />
-                        </motion.div>
+            {/* Right auth panel */}
+            <div className="flex-1 flex items-center justify-center p-6 lg:p-12 overflow-y-auto bg-[var(--bg-primary)]">
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="w-full max-w-md"
+                >
+                    {/* Mobile logo */}
+                    <div className="flex justify-center mb-8 lg:hidden">
+                        <Logo width={120} height={40} />
                     </div>
 
-                    {/* Title */}
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                            Welcome back
-                        </h1>
-                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                            Sign in to continue to your account
+                    {/* Tab toggle */}
+                    <div className="flex rounded-xl p-1 mb-8 gap-1"
+                        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+                        {(['login', 'register'] as const).map(t => (
+                            <button key={t} onClick={() => setTab(t)}
+                                className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200"
+                                style={{
+                                    background: tab === t ? 'var(--accent)' : 'transparent',
+                                    color: tab === t ? 'white' : 'var(--text-muted)',
+                                    boxShadow: tab === t ? '0 0 16px -4px rgba(224,62,62,0.4)' : 'none',
+                                }}>
+                                {t === 'login' ? 'Sign In' : 'Register'}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Heading */}
+                    <div className="mb-8">
+                        <h2 className="text-2xl font-jakarta font-bold tracking-tight uppercase" style={{ color: 'var(--text-primary)' }}>
+                            {tab === 'login' ? 'Identity Verification' : 'Enrollment'}
+                        </h2>
+                        <p className="text-xs font-mono mt-2" style={{ color: 'var(--text-muted)' }}>
+                            {tab === 'login' ? 'Authorized personnel only. Please sign in.' : 'Register for the integrity-first assessment engine.'}
                         </p>
                     </div>
 
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Email Field */}
-                        <div className="space-y-2">
-                            <label className="block text-xs font-medium uppercase tracking-wider"
-                                style={{ color: 'var(--text-muted)' }}>
-                                Email
-                            </label>
-                            <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3.5 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                                    style={{
-                                        background: 'var(--bg-tertiary)',
-                                        border: '1px solid var(--border)',
-                                        color: 'var(--text-primary)'
-                                    }}
-                                    placeholder="Enter your email"
-                                    required
-                                />
-                            </div>
-                        </div>
+                    {/* Forms */}
+                    <AnimatePresence mode="wait">
+                        {tab === 'login'
+                            ? <LoginForm key="login" onSwitch={() => setTab('register')} />
+                            : <RegisterForm key="register" onSwitch={() => setTab('login')} />
+                        }
+                    </AnimatePresence>
 
-                        {/* Password Field */}
-                        <div className="space-y-2">
-                            <label className="block text-xs font-medium uppercase tracking-wider"
-                                style={{ color: 'var(--text-muted)' }}>
-                                Password
-                            </label>
-                            <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                </div>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-12 pr-12 py-3.5 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                                    style={{
-                                        background: 'var(--bg-tertiary)',
-                                        border: '1px solid var(--border)',
-                                        color: 'var(--text-primary)'
-                                    }}
-                                    placeholder="••••••••"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors hover:opacity-80"
-                                    style={{ color: 'var(--text-muted)' }}
-                                >
-                                    {showPassword ? (
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Error Message */}
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="p-3 rounded-xl text-sm text-center badge-danger"
-                            >
-                                {error}
-                            </motion.div>
-                        )}
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-4 rounded-xl font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6 hover:opacity-90"
-                            style={{
-                                background: 'var(--accent)',
-                                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.25)'
-                            }}
-                        >
-                            {loading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    Sign in
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                    </svg>
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-
-
-                    {/* Register Link */}
-                    <div className="mt-6 text-center">
-                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                            Don&apos;t have an account?{' '}
-                            <Link href="/register" className="font-medium transition-colors hover:opacity-80" style={{ color: 'var(--accent)' }}>
-                                Register
-                            </Link>
-                        </p>
-                    </div>
-
-                    {/* Terms & Privacy */}
-                    <div className="mt-4 text-center">
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            By signing in, you agree to our{' '}
-                            <Link href="/terms" className="transition-colors hover:opacity-80" style={{ color: 'var(--accent)' }}>
-                                Terms
-                            </Link>
-                            {' '}and{' '}
-                            <Link href="/privacy" className="transition-colors hover:opacity-80" style={{ color: 'var(--accent)' }}>
-                                Privacy Policy
-                            </Link>
-                        </p>
-                    </div>
-                </div>
-
-                {/* Bottom glow under card */}
-                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-20 rounded-full blur-3xl opacity-15"
-                    style={{ background: 'var(--accent)' }} />
-            </motion.div>
+                    {/* Legal */}
+                    <p className="mt-6 text-center font-mono text-[10px] tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                        By continuing, you agree to our{' '}
+                        <Link href="/terms" className="hover:opacity-80 transition-opacity" style={{ color: 'var(--accent)' }}>Terms</Link>
+                        {' & '}
+                        <Link href="/privacy" className="hover:opacity-80 transition-opacity" style={{ color: 'var(--accent)' }}>Privacy Policy</Link>
+                    </p>
+                </motion.div>
+            </div>
         </div>
+    )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
+                <div className="w-6 h-6 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin" />
+            </div>
+        }>
+            <LoginPageInner />
+        </Suspense>
     )
 }

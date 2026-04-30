@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Manrope, Inter, Instrument_Serif } from "next/font/google"
+import { Manrope, Inter, Instrument_Serif, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google"
 import "./globals.css"
 import { Providers } from "./providers"
 
@@ -19,14 +19,22 @@ const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument",
 })
 
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+})
+
+const jakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+})
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+    { media: "(prefers-color-scheme: dark)", color: "#050508" },
   ],
   viewportFit: "cover", // For iPhone notch support
   interactiveWidget: "resizes-content", // Handle iOS keyboard properly
@@ -55,8 +63,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${manrope.variable} ${inter.variable} ${instrumentSerif.variable}`}>
-      <body className={`${inter.className} text-zinc-50 antialiased`}>
+    <html lang="en" className={`${manrope.variable} ${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} ${jakartaSans.variable}`}>
+      <body className={`${manrope.className} text-zinc-50 antialiased`}>
         <Providers>
           {children}
         </Providers>

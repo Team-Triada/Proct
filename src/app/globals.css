@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* ============================================
+   SHINE BORDER ANIMATION (MagicUI)
+   ============================================ */
+@theme inline {
+  --animate-shine: shine var(--duration) infinite linear;
+
+  @keyframes shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    to {
+      background-position: 0% 0%;
+    }
+  }
+}
+
 @theme {
   --color-accent: var(--accent);
   --color-accent-subtle: var(--accent-subtle);
@@ -11,16 +30,6 @@
   --color-theme-secondary: var(--bg-secondary);
   --color-theme-tertiary: var(--bg-tertiary);
   --color-theme-muted: var(--text-muted);
-}
-
-/* Layout utilities */
-.max-w-5xl {
-  max-width: 1024px;
-}
-
-.mx-auto {
-  margin-left: auto;
-  margin-right: auto;
 }
 
 /* Theme utilities */
@@ -65,30 +74,37 @@
 }
 
 /* ============================================
-   THEME VARIABLES
+   CYBER-MINIMALISM THEME VARIABLES
    ============================================ */
 
 :root {
-  /* Default to dark */
-  --bg-primary: #09090b;
-  --bg-secondary: #0f0f12;
-  --bg-tertiary: #18181b;
-  --bg-elevated: #1c1c21;
+  /* Default to dark — Pitch Black Cyber-Minimalism */
+  --bg-primary: #050508;
+  --bg-secondary: #0f0f1a;
+  --bg-tertiary: #151524;
+  --bg-elevated: #1a1a2e;
 
-  --border: #27272a;
-  --border-subtle: #1f1f23;
+  --border: rgba(255, 255, 255, 0.10);
+  --border-subtle: rgba(255, 255, 255, 0.05);
 
   --text-primary: #fafafa;
   --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text-muted: #52526a;
 
-  --accent: #ef4444;
-  --accent-muted: #dc2626;
-  --accent-subtle: rgba(239, 68, 68, 0.1);
+  /* Neon Accents */
+  --accent: #e03e3e;
+  --accent-muted: #c33;
+  --accent-subtle: rgba(224, 62, 62, 0.10);
 
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --success: #34d399;
+  --warning: #eab308;
+  --danger: #e03e3e;
+
+  /* Neon Blues */
+  --neon-blue: #60a5fa;
+  --neon-blue-subtle: rgba(96, 165, 250, 0.10);
+
+  --glow-blend: plus-lighter;
 }
 
 [data-theme="light"] {
@@ -104,27 +120,34 @@
   --text-secondary: #475569;
   --text-muted: #94a3b8;
 
-  --accent: #ef4444;
-  --accent-muted: #dc2626;
-  --accent-subtle: rgba(239, 68, 68, 0.1);
+  --accent: #e03e3e;
+  --accent-muted: #c33;
+  --accent-subtle: rgba(224, 62, 62, 0.1);
 
   --success: #16a34a;
   --warning: #d97706;
   --danger: #dc2626;
+
+  --neon-blue: #3b82f6;
+  --neon-blue-subtle: rgba(59, 130, 246, 0.10);
+
+  --glow-blend: multiply;
 }
 
 [data-theme="dark"] {
-  --bg-primary: #09090b;
-  --bg-secondary: #0f0f12;
-  --bg-tertiary: #18181b;
-  --bg-elevated: #1c1c21;
+  --bg-primary: #050508;
+  --bg-secondary: #0f0f1a;
+  --bg-tertiary: #151524;
+  --bg-elevated: #1a1a2e;
 
-  --border: #27272a;
-  --border-subtle: #1f1f23;
+  --border: rgba(255, 255, 255, 0.10);
+  --border-subtle: rgba(255, 255, 255, 0.05);
 
   --text-primary: #fafafa;
   --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text-muted: #52526a;
+
+  --glow-blend: plus-lighter;
 }
 
 
@@ -147,11 +170,13 @@
 }
 
 
-/* Typography Utilities */
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+
 .font-manrope {
   font-family: var(--font-manrope), sans-serif;
 }
-
 
 .font-inter {
   font-family: var(--font-inter), sans-serif;
@@ -159,6 +184,133 @@
 
 .font-instrument {
   font-family: var(--font-instrument), serif;
+}
+
+.font-mono {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+.font-jakarta {
+  font-family: var(--font-jakarta), 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ============================================
+   CYBER-MINIMALISM UTILITIES
+   ============================================ */
+
+.page-container {
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* Eyebrow — Mono label for section tags, pills, status text */
+.eyebrow {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Glassmorphic surface */
+.glass {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 0 transparent;
+}
+
+.glass-elevated {
+  background: var(--bg-tertiary);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Ambient glows */
+.glow-red {
+  background-image: radial-gradient(ellipse at center, rgba(224, 62, 62, 0.06), transparent 60%);
+}
+
+.glow-blue {
+  background-image: radial-gradient(ellipse at center, rgba(96, 165, 250, 0.04), transparent 60%);
+}
+
+.glow-green {
+  background-image: radial-gradient(ellipse at center, rgba(52, 211, 153, 0.04), transparent 60%);
+}
+
+/* Terminal Chrome — macOS-style window header */
+.terminal-chrome {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.terminal-chrome-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.terminal-dot-red { background: #ff5f57; }
+.terminal-dot-yellow { background: #febc2e; }
+.terminal-dot-green { background: #28c840; }
+
+.terminal-title {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* Neon accent pills — 10% bg + 15% border */
+.pill-red {
+  background: rgba(224, 62, 62, 0.10);
+  border: 1px solid rgba(224, 62, 62, 0.15);
+  color: #e03e3e;
+}
+
+.pill-green {
+  background: rgba(52, 211, 153, 0.10);
+  border: 1px solid rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.pill-blue {
+  background: rgba(96, 165, 250, 0.10);
+  border: 1px solid rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+.pill-yellow {
+  background: rgba(234, 179, 8, 0.10);
+  border: 1px solid rgba(234, 179, 8, 0.15);
+  color: #eab308;
 }
 
 /* ============================================
@@ -175,6 +327,7 @@ html {
 }
 
 body {
+  font-family: var(--font-manrope), sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -536,11 +689,7 @@ tbody tr:hover {
   white-space: nowrap;
   font-size: 12px;
   font-weight: 500;
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(239, 68, 68, 0.15);
-  transform: rotate(-35deg);
-  user-select: none;
+  color: rgba(224, 62, 62, 0.15);
   transform: rotate(-35deg);
   user-select: none;
 }
@@ -649,7 +798,10 @@ tbody tr:hover {
   border-color: var(--danger);
 }
 
-/* Mobile Responsiveness */
+/* ============================================
+   MOBILE RESPONSIVENESS
+   ============================================ */
+
 @media (max-width: 640px) {
   body {
     font-size: 15px;
@@ -686,6 +838,7 @@ tbody tr:hover {
   .quiz-option {
     padding: 16px;
     min-height: 60px;
+    touch-action: manipulation;
   }
 
   .enforcement-btn {
@@ -723,6 +876,30 @@ tbody tr:hover {
     padding: 4px 8px;
     font-size: 10px;
   }
+
+  .quiz-option,
+  .option-letter {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .timer {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 
 /* Extra small screens */
@@ -745,6 +922,18 @@ tbody tr:hover {
     height: 40px;
     font-size: 13px;
   }
+
+  .grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .text-xs {
+    font-size: 11px;
+  }
+
+  h1 {
+    font-size: 18px;
+  }
 }
 
 /* Touch-friendly improvements */
@@ -763,6 +952,21 @@ tbody tr:hover {
   .option-letter:active,
   .quiz-option:active {
     transform: scale(0.98);
+  }
+
+  .checkbox-root {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -819,115 +1023,6 @@ tbody tr:hover {
 
 .mb-safe {
   margin-bottom: max(12px, env(safe-area-inset-bottom));
-}
-
-/* Mobile Quiz Option Improvements */
-@media (max-width: 640px) {
-  .quiz-option {
-    padding: 16px;
-    min-height: 60px;
-    touch-action: manipulation;
-  }
-
-  /* Prevent text selection on touch */
-  .quiz-option,
-  .option-letter {
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  /* Better timer visibility on mobile */
-  .timer {
-    font-size: 14px;
-    padding: 6px 12px;
-  }
-
-  /* Responsive grid for quiz creation */
-  .grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-
-  .grid-cols-3 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  /* Stack navigation on mobile */
-  .nav-links {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-}
-
-/* Extra small screens (iPhone SE, etc.) */
-@media (max-width: 380px) {
-  .btn {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
-
-  .card {
-    padding: 14px;
-  }
-
-  .enforcement-btn {
-    padding: 12px;
-  }
-
-  .option-letter {
-    width: 40px;
-    height: 40px;
-    font-size: 13px;
-  }
-
-  .grid-cols-3 {
-    grid-template-columns: 1fr;
-  }
-
-  /* Smaller text for compact screens */
-  .text-xs {
-    font-size: 11px;
-  }
-
-  h1 {
-    font-size: 18px;
-  }
-}
-
-/* Touch-friendly improvements */
-@media (hover: none) and (pointer: coarse) {
-
-  .btn,
-  .enforcement-btn,
-  .option-letter,
-  .quiz-option,
-  .card-interactive {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .btn:active,
-  .enforcement-btn:active,
-  .option-letter:active,
-  .quiz-option:active {
-    transform: scale(0.98);
-  }
-
-  /* Larger hit areas for touch */
-  .checkbox-root {
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  /* Reduce motion on mobile for performance */
-  @media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
 }
 
 /* Landscape Mobile Specific */
