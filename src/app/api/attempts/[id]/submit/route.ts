@@ -37,7 +37,7 @@ export async function POST(
     // Allow 60 seconds grace period for latency
     if (elapsedSeconds > timeLimitSeconds + 60) {
         // Log expired but still process
-        console.log(`Attempt ${id} submitted after expiration. Elapsed: ${elapsedSeconds}, Limit: ${timeLimitSeconds}`)
+        console.warn(`[AUDIT] Late submission: attempt=${id} elapsed=${elapsedSeconds}s limit=${timeLimitSeconds}s overage=${elapsedSeconds - timeLimitSeconds}s`)
     }
 
     // Calculate Score (Synchronous)
