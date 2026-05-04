@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { normalizeBatch } from '@/lib/utils'
+import { matchesQuizTargeting } from '@/lib/quizFilters'
+import { getPlatformSettings } from '@/lib/settings'
 
 interface QuestionPayload {
     id?: string
@@ -62,24 +63,15 @@ export async function GET(
 
         if (!student) return NextResponse.json({ error: 'Student profile not found' }, { status: 403 })
 
-        // 1. (Semester Check removed)
-        // if (student.semester !== quiz.subject.semester) { ... }
-
-        // 2. Batch (Year) Check
-        const assignedBatches = (quiz.assignedBatches as string[] | null) || []
-        if (assignedBatches.length > 0) {
-            const studentBatch = normalizeBatch(student.batch || '')
-            const normalizedAssigned = assignedBatches.map(b => normalizeBatch(b))
-
-            if (!studentBatch || !normalizedAssigned.includes(studentBatch)) {
-                return NextResponse.json({ error: 'This quiz is not for your year' }, { status: 403 })
-            }
+        const settings = await getPlatformSettings()
+        const quizTargeting = {
+            assignedBatches: quiz.assignedBatches,
+            targetSection: quiz.targetSection,
+            targetSemester: (quiz as { targetSemester?: number | null }).targetSemester ?? null,
         }
 
-        // 3. Section (Batch 1-12) Check
-        const targetSection = quiz.targetSection
-        if (targetSection && student.section !== targetSection) {
-            return NextResponse.json({ error: `This quiz is for Batch ${targetSection} only` }, { status: 403 })
+        if (!matchesQuizTargeting(quizTargeting, student, settings)) {
+            return NextResponse.json({ error: 'You are not eligible for this quiz' }, { status: 403 })
         }
 
         // 4. Hide correct answers for students
@@ -123,7 +115,7 @@ export async function PUT(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { title, subject, description, timePerQuestion, enforcementMode, isPublished, questions, targetSection, assignedBatches } = body
+    const { title, subject, description, timePerQuestion, enforcementMode, isPublished, questions, targetSection, assignedBatches, targetSemester } = body
 
     // Update quiz details
     const updatedQuiz = await prisma.quiz.update({
@@ -137,7 +129,8 @@ export async function PUT(
             ...(isPublished !== undefined && { isPublished }),
             ...(questions && { totalQuestions: questions.length }),
             ...(targetSection !== undefined && { targetSection: targetSection || null }),
-            ...(assignedBatches !== undefined && { assignedBatches })
+            ...(assignedBatches !== undefined && { assignedBatches }),
+            ...(targetSemester !== undefined && { targetSemester: targetSemester || null }),
         }
     })
 

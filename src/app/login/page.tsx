@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Image from 'next/image'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -223,19 +223,51 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
 
 // ─── Register Form ────────────────────────────────────────────────────────────
 
+type FieldFormat = 'NUMERIC' | 'ALPHA' | 'ALPHANUMERIC' | 'ANY'
+interface RegSettings {
+    allowedEmailDomains: string[]
+    studentIdLabel: string; studentIdFormat: FieldFormat; studentIdMinLength: number; studentIdMaxLength: number; studentIdRequired: boolean
+    rollNumberLabel: string; rollNumberFormat: FieldFormat; rollNumberMinLength: number; rollNumberMaxLength: number; rollNumberRequired: boolean
+    maxSemester: number; availableBatches: string[]; maxBatchNumber: number
+}
+const REG_DEFAULTS: RegSettings = {
+    allowedEmailDomains: [], studentIdLabel: 'Campus ID', studentIdFormat: 'ANY', studentIdMinLength: 1, studentIdMaxLength: 50, studentIdRequired: false,
+    rollNumberLabel: 'Registration Number', rollNumberFormat: 'ANY', rollNumberMinLength: 1, rollNumberMaxLength: 50, rollNumberRequired: true,
+    maxSemester: 8, availableBatches: [], maxBatchNumber: 13,
+}
+
 function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
     const router = useRouter()
     const [formData, setFormData] = useState({ name: '', email: '', password: '', rollNumber: '', campusId: '', batch: '', semester: '', section: '' })
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [settings, setSettings] = useState<RegSettings>(REG_DEFAULTS)
+
+    useEffect(() => {
+        fetch('/api/settings/public').then(r => r.json()).then(setSettings).catch(() => {})
+    }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
 
+    const emailPlaceholder = settings.allowedEmailDomains.length > 0
+        ? `you${settings.allowedEmailDomains[0]}`
+        : 'you@institution.edu'
+
     const validate = () => {
-        if (!formData.email.toLowerCase().endsWith('@yenepoya.edu.in')) return 'Email must be a @yenepoya.edu.in address'
-        if (!/^\d{5}$/.test(formData.campusId)) return 'Campus ID must be exactly 5 digits'
+        if (settings.allowedEmailDomains.length > 0) {
+            const emailLower = formData.email.toLowerCase()
+            const allowed = settings.allowedEmailDomains.some((d: string) =>
+                emailLower.endsWith(d.startsWith('@') ? d.toLowerCase() : `@${d.toLowerCase()}`)
+            )
+            if (!allowed) return `Email must use: ${settings.allowedEmailDomains.join(', ')}`
+        }
+        if (settings.studentIdRequired && formData.campusId) {
+            if (formData.campusId.length < settings.studentIdMinLength || formData.campusId.length > settings.studentIdMaxLength) {
+                return `${settings.studentIdLabel} must be ${settings.studentIdMinLength}–${settings.studentIdMaxLength} characters`
+            }
+        }
         if (formData.password.length < 8) return 'Password must be at least 8 characters'
         if (!/[a-z]/.test(formData.password)) return 'Password needs a lowercase letter'
         if (!/[A-Z]/.test(formData.password)) return 'Password needs an uppercase letter'
@@ -255,11 +287,7 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
             const data = await res.json()
             if (!res.ok) { setError(data.error || 'Registration failed'); setLoading(false); return }
             const loginResult = await signIn('credentials', { email: formData.email, password: formData.password, redirect: false })
-            if (loginResult?.error) {
-                setError('Account created but sign-in failed. Please sign in manually.')
-                setLoading(false)
-                return
-            }
+            if (loginResult?.error) { setError('Account created but sign-in failed. Please sign in manually.'); setLoading(false); return }
             router.push('/student')
         } catch {
             setError('Something went wrong')
@@ -269,6 +297,7 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
 
     const inputClass = "w-full pl-10 pr-4 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
     const inputStyle = { background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }
+    const selectClass = "w-full px-3 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)] appearance-none cursor-pointer"
     const labelClass = "block text-xs font-semibold uppercase tracking-widest mb-1.5"
     const labelStyle = { color: 'var(--text-muted)' }
 
@@ -276,6 +305,10 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
     const IconEmail = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
     const IconLock = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
     const IconId = () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" /></svg>
+
+    const semesterOptions = Array.from({ length: settings.maxSemester }, (_, i) => i + 1)
+    const batchOptions = Array.from({ length: settings.maxBatchNumber }, (_, i) => i + 1)
+    const yearOptions = settings.availableBatches.length > 0 ? settings.availableBatches : []
 
     return (
         <motion.div key="register" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }}>
@@ -294,8 +327,13 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
                     <label className={labelClass} style={labelStyle}>Email</label>
                     <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}><IconEmail /></span>
-                        <input type="email" name="email" value={formData.email} onChange={handleChange} className={inputClass} style={inputStyle} placeholder="campusid@yenepoya.edu.in" required />
+                        <input type="email" name="email" value={formData.email} onChange={handleChange} className={inputClass} style={inputStyle} placeholder={emailPlaceholder} required />
                     </div>
+                    {settings.allowedEmailDomains.length > 0 && (
+                        <p className="mt-1 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
+                            Allowed: {settings.allowedEmailDomains.join(', ')}
+                        </p>
+                    )}
                 </div>
 
                 {/* Password */}
@@ -316,46 +354,56 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
                 </div>
 
                 {/* Roll Number */}
-                <div>
-                    <label className={labelClass} style={labelStyle}>Registration Number</label>
-                    <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}><IconId /></span>
-                        <input type="text" name="rollNumber" value={formData.rollNumber} onChange={handleChange} className={inputClass} style={inputStyle} placeholder="e.g. 23BBCCED009" required />
+                {settings.rollNumberRequired && (
+                    <div>
+                        <label className={labelClass} style={labelStyle}>{settings.rollNumberLabel}</label>
+                        <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}><IconId /></span>
+                            <input type="text" name="rollNumber" value={formData.rollNumber} onChange={handleChange} className={inputClass} style={inputStyle}
+                                placeholder={settings.rollNumberFormat === 'NUMERIC' ? 'Numbers only' : settings.rollNumberFormat === 'ALPHA' ? 'Letters only' : 'e.g. 23BBCCED009'}
+                                required={settings.rollNumberRequired} />
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* Campus ID */}
-                <div>
-                    <label className={labelClass} style={labelStyle}>Campus ID</label>
-                    <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" /></svg>
-                        </span>
-                        <input type="text" name="campusId" value={formData.campusId} onChange={handleChange} className={inputClass} style={inputStyle} placeholder="5 digits (e.g. 12345)" pattern="\d{5}" maxLength={5} required />
+                {/* Campus ID / Student ID */}
+                {settings.studentIdRequired && (
+                    <div>
+                        <label className={labelClass} style={labelStyle}>{settings.studentIdLabel}</label>
+                        <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" /></svg>
+                            </span>
+                            <input type="text" name="campusId" value={formData.campusId} onChange={handleChange} className={inputClass} style={inputStyle}
+                                placeholder={settings.studentIdFormat === 'NUMERIC' ? `${settings.studentIdMinLength}-${settings.studentIdMaxLength} digits` : settings.studentIdLabel}
+                                maxLength={settings.studentIdMaxLength} required={settings.studentIdRequired} />
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Year + Semester */}
                 <div className="grid grid-cols-2 gap-3">
                     <div>
                         <label className={labelClass} style={labelStyle}>Year</label>
-                        <select name="batch" value={formData.batch} onChange={handleChange}
-                            className="w-full px-3 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)] appearance-none cursor-pointer"
-                            style={{ ...inputStyle, color: formData.batch ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
-                            <option value="">Year</option>
-                            <option value="2023-26">2023-26</option>
-                            <option value="2024-27">2024-27</option>
-                            <option value="2025-28">2025-28</option>
-                            <option value="2026-29">2026-29</option>
-                        </select>
+                        {yearOptions.length > 0 ? (
+                            <select name="batch" value={formData.batch} onChange={handleChange}
+                                className={selectClass} style={{ ...inputStyle, color: formData.batch ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
+                                <option value="">Year</option>
+                                {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        ) : (
+                            <div className="relative">
+                                <input type="text" name="batch" value={formData.batch} onChange={handleChange} className="w-full px-3 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                                    style={inputStyle} placeholder="e.g. 2024-27" required />
+                            </div>
+                        )}
                     </div>
                     <div>
                         <label className={labelClass} style={labelStyle}>Semester</label>
                         <select name="semester" value={formData.semester} onChange={handleChange}
-                            className="w-full px-3 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)] appearance-none cursor-pointer"
-                            style={{ ...inputStyle, color: formData.semester ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
+                            className={selectClass} style={{ ...inputStyle, color: formData.semester ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
                             <option value="">Sem</option>
-                            {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Sem {s}</option>)}
+                            {semesterOptions.map(s => <option key={s} value={s}>Sem {s}</option>)}
                         </select>
                     </div>
                 </div>
@@ -364,10 +412,9 @@ function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
                 <div>
                     <label className={labelClass} style={labelStyle}>Batch</label>
                     <select name="section" value={formData.section} onChange={handleChange}
-                        className="w-full px-3 py-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)] appearance-none cursor-pointer"
-                        style={{ ...inputStyle, color: formData.section ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
+                        className={selectClass} style={{ ...inputStyle, color: formData.section ? 'var(--text-primary)' : 'var(--text-muted)' }} required>
                         <option value="">Select Batch</option>
-                        {[1,2,3,4,5,6,7,8,9,10,11,12,13].map(n => <option key={n} value={String(n)}>Batch {n}</option>)}
+                        {batchOptions.map(n => <option key={n} value={String(n)}>Batch {n}</option>)}
                     </select>
                 </div>
 

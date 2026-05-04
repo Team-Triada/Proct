@@ -127,6 +127,7 @@ describe('Quiz Attempt Flow', () => {
             questionId: 'q1_id',
             selectedIndex: 1, // '4'
             currentQuestionIndex: 0,
+            shuffleMapping: [2, 1, 0],
         }
 
         it('saves correct answer and awards points', async () => {
@@ -176,8 +177,8 @@ describe('Quiz Attempt Flow', () => {
                 correctIndices: JSON.stringify([0, 1]), // 2 correct
                 points: 10
             })
-            // Select 1 correct, 0 wrong -> (1-0)/2 * 10 = 5 points
-            const payload = { ...SAVE_PAYLOAD, selectedIndices: [0] }
+            // shuffleMapping [2,1,0]: display index 1 → original 1 (correct), 0 wrong → (1-0)/2 * 10 = 5
+            const payload = { ...SAVE_PAYLOAD, selectedIndices: [1] }
             const req = buildPOSTRequest('http://localhost', payload)
             await saveAnswer(req, buildParams('a1') as never)
             expect(mockAnswerUpsert).toHaveBeenCalledWith(expect.objectContaining({

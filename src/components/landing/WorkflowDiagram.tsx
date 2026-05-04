@@ -56,9 +56,9 @@ export const WorkflowDiagram = () => {
                 glowIntensity={0.5}
                 edgeSensitivity={25}
                 coneSpread={20}
-                className="border-0"
+                className="p-[1px]"
             >
-                <div className="flex flex-col w-full h-full rounded-[16px] overflow-hidden bg-[var(--bg-secondary)]">
+                <div className="flex flex-col w-full h-full rounded-[15px] overflow-hidden bg-[var(--bg-secondary)]">
                     {/* macOS Title Bar */}
                     <div className="terminal-chrome-bar">
                         <div className="terminal-dot terminal-dot-red" />

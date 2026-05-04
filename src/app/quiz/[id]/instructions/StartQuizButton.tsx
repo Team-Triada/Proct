@@ -18,6 +18,10 @@ export default function StartQuizButton({
 
     const enterFullscreen = async () => {
         try {
+            const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent)
+            if (isIOS) {
+                return
+            }
             const el = document.documentElement
             const webkitEl = el as HTMLElement & {
                 webkitRequestFullscreen?: () => Promise<void>

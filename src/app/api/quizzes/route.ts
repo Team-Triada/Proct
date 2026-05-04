@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, subjectId, description, timePerQuestion, totalQuestions, enforcementMode, timingMode, totalDuration, assignedBatches, targetBatch, targetSection, isPublished, questions, availableFrom, availableUntil } = body
+    const { title, subjectId, description, timePerQuestion, totalQuestions, enforcementMode, timingMode, totalDuration, assignedBatches, targetBatch, targetSection, targetSemester, isPublished, questions, availableFrom, availableUntil } = body
 
     // Validate Timing Modes
 
@@ -99,8 +99,9 @@ export async function POST(request: NextRequest) {
             totalDuration: totalDuration || null,
             enforcementMode,
 
-            assignedBatches: finalBatches, // Save as JSON array
+            assignedBatches: finalBatches,
             targetSection: targetSection || null,
+            targetSemester: targetSemester ? parseInt(targetSemester) : null,
             isPublished,
             availableFrom: availableFrom ? new Date(availableFrom) : null,
             availableUntil: availableUntil ? new Date(availableUntil) : null,

@@ -74,8 +74,15 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const timerRef = useRef<NodeJS.Timeout | null>(null)
     const startTimeRef = useRef<number>(Date.now())
     const violationCountRef = useRef(0)
+    const violationSuppressUntilRef = useRef(0)
     const lastViolationTimeRef = useRef(0)
     const timerExpiredHandled = useRef(false) // Prevent double-trigger on timer expiry
+
+    const safeWriteClipboard = useCallback((value: string) => {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(value).catch(() => { })
+        }
+    }, [])
 
     // Init Quiz (Start/Resume)
     useEffect(() => {
@@ -112,7 +119,8 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
                 // Resume Logic or New Start
                 if (data.resume) {
-                    setCurrentQuestionIndex(data.currentIndex)
+                    violationSuppressUntilRef.current = Date.now() + 4000
+                    setCurrentQuestionIndex(Math.min(data.currentIndex + 1, data.questionOrder.length - 1))
 
                     // Map existing answers to local state
                     const answerMap: Record<string, AnswerState> = {}
@@ -217,7 +225,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
 
     // Incremental Save (Background)
-    const saveProgress = useCallback(async (qId: string, answerData: AnswerState) => {
+    const saveProgress = useCallback(async (qId: string, answerData: AnswerState, nextIndex?: number) => {
         if (!attemptId) return
 
         // Update local state immediately
@@ -232,7 +240,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     questionId: qId,
-                    currentQuestionIndex: currentQuestionIndex,
+                    currentQuestionIndex: nextIndex ?? currentQuestionIndex,
                     ...answerData
                 })
             })
@@ -266,14 +274,21 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
 
         // Save current answer
         let answerData: AnswerState = {}
-        if (question.type === 'CHECKBOX') answerData = { selectedIndices }
-        else if (question.type.includes('ANSWER')) answerData = { textAnswer }
-        else answerData = { selectedIndex }
+        if (question.type === 'CHECKBOX') {
+            answerData = { selectedIndices, shuffleMapping: question.shuffleMapping }
+        } else if (question.type.includes('ANSWER')) {
+            answerData = { textAnswer }
+        } else {
+            answerData = { selectedIndex, shuffleMapping: question.shuffleMapping }
+        }
 
-        await saveProgress(question.questionId, answerData)
+        const hasNextQuestion = currentQuestionIndex < questionOrder.length - 1
+        const nextIndex = hasNextQuestion ? currentQuestionIndex + 1 : currentQuestionIndex
+
+        await saveProgress(question.questionId, answerData, nextIndex)
 
         // Move to next question
-        if (currentQuestionIndex < questionOrder.length - 1) {
+        if (hasNextQuestion) {
             timerInitialized.current = false // Allow timer reset for new question
             timerExpiredHandled.current = false // Reset timer expiry guard for next question
             setCurrentQuestionIndex((prev: number) => prev + 1)
@@ -330,6 +345,20 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     // Rate-limited violation logging
     const logViolation = useCallback(async (type: string) => {
         if (!attemptId) return
+
+        const suppressedTypes = new Set([
+            'FULLSCREEN_EXIT',
+            'WINDOW_RESIZE',
+            'TAB_SWITCH',
+            'APP_SWITCH',
+            'QUICK_BLUR_DETECTED',
+            'SCREENSHOT_DETECTED',
+            'PAGE_HIDE_IOS',
+            'APP_SWITCH_IOS'
+        ])
+        if (Date.now() < violationSuppressUntilRef.current && suppressedTypes.has(type)) {
+            return
+        }
 
         // Prevent spam - minimum 2 seconds between violations
         const now = Date.now()
@@ -448,7 +477,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
             if (e.key === 'PrintScreen') {
                 e.preventDefault()
                 e.stopPropagation()
-                navigator.clipboard.writeText('').catch(() => { })
+                safeWriteClipboard('')
                 logViolation('SCREENSHOT_ATTEMPT')
                 return false
             }
@@ -495,7 +524,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         const handleKeyUp = (e: KeyboardEvent) => {
             // Clear clipboard after PrintScreen release
             if (e.key === 'PrintScreen') {
-                navigator.clipboard.writeText('Screenshot disabled').catch(() => { })
+                safeWriteClipboard('Screenshot disabled')
             }
         }
 
@@ -506,7 +535,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
             document.removeEventListener('keydown', handleKeyDown, true)
             document.removeEventListener('keyup', handleKeyUp, true)
         }
-    }, [attemptId, completed, logViolation])
+    }, [attemptId, completed, logViolation, safeWriteClipboard])
 
     // SCREENSHOT PREVENTION 5: Copy/Paste/Cut Prevention
     useEffect(() => {
@@ -540,6 +569,12 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     // FULLSCREEN ENFORCEMENT
     useEffect(() => {
         if (!attemptId || completed) return
+
+        const isIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent)
+        if (isIOS) {
+            setIsFullscreen(true)
+            return
+        }
 
         // Check if the browser actually supports fullscreen on the document element (e.g. iPhones do not)
         const el = document.documentElement
@@ -751,8 +786,25 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         }
 
         let devToolsOpen = false
+        let wasFullscreen = false
 
         const detectDevTools = () => {
+            const isFullscreen = Boolean(
+                document.fullscreenElement ||
+                (document as Document & { webkitFullscreenElement?: Element }).webkitFullscreenElement
+            )
+
+            if (isFullscreen) {
+                devToolsOpen = false
+                wasFullscreen = true
+                return
+            }
+
+            if (wasFullscreen) {
+                wasFullscreen = false
+                return
+            }
+
             const threshold = 160
             const widthThreshold = window.outerWidth - window.innerWidth > threshold
             const heightThreshold = window.outerHeight - window.innerHeight > threshold
@@ -818,11 +870,28 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
             setTimeout(() => setScreenProtectionActive(false), 2000)
         }
 
+        let restoreGetDisplayMedia: (() => void) | null = null
+
         // Check for getDisplayMedia (modern browsers)
         if (navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices) {
-            navigator.mediaDevices.getDisplayMedia = async () => {
-                handleScreenCapture()
-                throw new Error('Screen capture is not allowed during the quiz')
+            const mediaDevices = navigator.mediaDevices as MediaDevices & {
+                getDisplayMedia?: () => Promise<MediaStream>
+            }
+            const originalGetDisplayMedia = mediaDevices.getDisplayMedia?.bind(mediaDevices)
+
+            try {
+                mediaDevices.getDisplayMedia = async () => {
+                    handleScreenCapture()
+                    throw new Error('Screen capture is not allowed during the quiz')
+                }
+            } catch { }
+
+            restoreGetDisplayMedia = () => {
+                if (originalGetDisplayMedia) {
+                    try {
+                        mediaDevices.getDisplayMedia = originalGetDisplayMedia
+                    } catch { }
+                }
             }
         }
 
@@ -843,6 +912,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         window.addEventListener('pageshow', handlePageShow)
 
         return () => {
+            restoreGetDisplayMedia?.()
             window.removeEventListener('pagehide', handlePageHide)
             window.removeEventListener('pageshow', handlePageShow)
         }
