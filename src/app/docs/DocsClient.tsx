@@ -67,6 +67,9 @@ export default function DocsClient() {
                     <h1 className="font-jakarta font-black text-5xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-tighter text-[var(--text-primary)] mb-6 uppercase">
                         Manual.
                     </h1>
+                    <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl font-mono tracking-tight leading-relaxed">
+                        Complete system reference for Proct — faculty workflows, student flows, security mechanics, and tech stack.
+                    </p>
                 </section>
 
                 <div className="container mx-auto px-6 max-w-[1600px] py-12">
@@ -92,33 +95,49 @@ export default function DocsClient() {
                             </div>
                         </aside>
 
+                        {/* --- Mobile Section Nav --- */}
+                        <div className="lg:hidden flex gap-2 overflow-x-auto pb-4 mb-8 border-b border-[var(--border-subtle)] no-scrollbar">
+                            {SECTIONS.map((section) => (
+                                <button
+                                    key={section.id}
+                                    onClick={() => scrollToSection(section.id)}
+                                    className={`shrink-0 px-3 py-1.5 text-xs font-mono uppercase tracking-widest border transition-colors ${activeSection === section.id
+                                        ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent)]/5'
+                                        : 'border-[var(--border-subtle)] text-[var(--text-muted)]'
+                                        }`}
+                                >
+                                    {section.title}
+                                </button>
+                            ))}
+                        </div>
+
                         {/* --- Main Content --- */}
-                        <article className="flex-1 space-y-32">
+                        <article className="flex-1 space-y-16 md:space-y-24 lg:space-y-32">
 
                             {/* Introduction */}
                             <section id="intro" className="space-y-6">
                                 <h2 className="text-3xl md:text-4xl font-jakarta font-black uppercase tracking-tighter mb-6">
                                     Introduction
                                 </h2>
-                                <p className="text-xl text-[var(--text-muted)] font-mono tracking-tight leading-relaxed max-w-3xl border-l-2 border-[var(--border-subtle)] pl-6">
-                                    The complete guide to Proct's integrity-first assessment platform. Understand how we enforce fairness, manage access, and structure data.
+                                <p className="text-sm md:text-base text-[var(--text-muted)] font-mono tracking-tight leading-relaxed max-w-3xl border-l-2 border-[var(--border-subtle)] pl-6">
+                                    The complete guide to Proct&apos;s integrity-first assessment platform. Understand how we enforce fairness, manage access, and structure data.
                                 </p>
 
-                                <div className="grid md:grid-cols-2 gap-px bg-[var(--border-subtle)] border border-[var(--border-subtle)] mt-12">
-                                    <div className="bg-[var(--bg-secondary)] p-8">
-                                        <h3 className="text-[var(--text-primary)] font-bold mb-4 font-mono uppercase text-xs tracking-widest flex items-center gap-3"><Lock size={14} className="text-[var(--accent)]" /> Purpose</h3>
-                                        <p className="text-sm text-[var(--text-muted)] font-mono">Most platforms optimize for ease of cheating. Proct optimizes for academic integrity through strict timing and linear navigation.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[var(--border-subtle)] border border-[var(--border-subtle)] mt-8">
+                                    <div className="bg-[var(--bg-secondary)] p-6 md:p-8">
+                                        <h3 className="text-[var(--text-primary)] font-bold mb-3 font-mono uppercase text-xs tracking-widest flex items-center gap-3"><Lock size={14} className="text-[var(--accent)]" /> Purpose</h3>
+                                        <p className="text-sm text-[var(--text-muted)] font-mono leading-relaxed">Most platforms optimize for ease of cheating. Proct optimizes for academic integrity through strict timing and linear navigation.</p>
                                     </div>
-                                    <div className="bg-[var(--bg-secondary)] p-8">
-                                        <h3 className="text-[var(--text-primary)] font-bold mb-4 font-mono uppercase text-xs tracking-widest flex items-center gap-3"><Users size={14} className="text-blue-500" /> Target</h3>
-                                        <p className="text-sm text-[var(--text-muted)] font-mono">Internal university departments needing to conduct standardized assessments for specific Years and Batches.</p>
+                                    <div className="bg-[var(--bg-secondary)] p-6 md:p-8">
+                                        <h3 className="text-[var(--text-primary)] font-bold mb-3 font-mono uppercase text-xs tracking-widest flex items-center gap-3"><Users size={14} className="text-blue-500" /> Target</h3>
+                                        <p className="text-sm text-[var(--text-muted)] font-mono leading-relaxed">Internal university departments needing to conduct standardized assessments for specific Years and Batches.</p>
                                     </div>
                                 </div>
                             </section>
 
                             {/* Key Features */}
                             <section id="features" className="space-y-8">
-                                <h2 className="text-3xl font-jakarta font-black uppercase tracking-tighter">Key Features</h2>
+                                <h2 className="text-3xl md:text-4xl font-jakarta font-black uppercase tracking-tighter mb-6">Key Features</h2>
 
                                 <div className="grid gap-px bg-[var(--border-subtle)] border border-[var(--border-subtle)]">
                                     <FeatureCard
@@ -146,7 +165,7 @@ export default function DocsClient() {
 
                             {/* Faculty Workflow */}
                             <section id="faculty-flow" className="space-y-8">
-                                <h2 className="text-3xl font-jakarta font-black uppercase tracking-tighter">Faculty Workflow</h2>
+                                <h2 className="text-3xl md:text-4xl font-jakarta font-black uppercase tracking-tighter mb-6">Faculty Workflow</h2>
 
                                 <div className="space-y-8">
                                     <WorkflowBlock
@@ -173,7 +192,7 @@ export default function DocsClient() {
 
                             {/* Student Workflow */}
                             <section id="student-flow" className="space-y-8">
-                                <h2 className="text-3xl font-jakarta font-black uppercase tracking-tighter">Student Workflow</h2>
+                                <h2 className="text-3xl md:text-4xl font-jakarta font-black uppercase tracking-tighter mb-6">Student Workflow</h2>
 
                                 <WorkflowBlock
                                     title="Taking a Quiz"
@@ -189,15 +208,15 @@ export default function DocsClient() {
 
                             {/* Security */}
                             <section id="security" className="space-y-8">
-                                <h2 className="text-3xl font-jakarta font-black uppercase tracking-tighter">Security Mechanics</h2>
+                                <h2 className="text-3xl md:text-4xl font-jakarta font-black uppercase tracking-tighter mb-6">Security Mechanics</h2>
                                 <p className="text-[var(--text-muted)] font-mono text-sm max-w-2xl border-l-2 border-[var(--accent)] pl-4">How Proct ensures the right person takes the test fairly.</p>
 
-                                <div className="grid md:grid-cols-2 gap-px bg-[var(--border-subtle)] border border-[var(--border-subtle)] mt-8">
-                                    <div className="bg-[var(--bg-secondary)] p-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[var(--border-subtle)] border border-[var(--border-subtle)] mt-8">
+                                    <div className="bg-[var(--bg-secondary)] p-6 md:p-8">
                                         <h4 className="text-[var(--text-primary)] font-bold flex items-center gap-3 mb-6 font-mono uppercase text-xs tracking-widest">
                                             <AlertTriangle className="text-[var(--warning)]" size={16} /> Access Control Logic
                                         </h4>
-                                        <code className="block border border-[var(--border-subtle)] p-6 bg-[var(--bg-primary)] text-xs font-mono text-[var(--text-muted)] leading-relaxed whitespace-pre">
+                                        <code className="block border border-[var(--border-subtle)] p-4 md:p-6 bg-[var(--bg-primary)] text-xs font-mono text-[var(--text-muted)] leading-relaxed whitespace-pre overflow-x-auto">
                                             IF (Student.Sem == Quiz.Sem){'\n'}
                                             AND (Student.Year == Quiz.Year){'\n'}
                                             AND (Student.Batch == Quiz.Batch){'\n'}
@@ -206,7 +225,7 @@ export default function DocsClient() {
                                         </code>
                                     </div>
 
-                                    <div className="bg-[var(--bg-secondary)] p-8">
+                                    <div className="bg-[var(--bg-secondary)] p-6 md:p-8">
                                         <h4 className="text-[var(--text-primary)] font-bold flex items-center gap-3 mb-6 font-mono uppercase text-xs tracking-widest">
                                             <Clock className="text-[var(--accent)]" size={16} /> Integrity Enforcers
                                         </h4>
@@ -222,7 +241,7 @@ export default function DocsClient() {
 
                             {/* Tech Stack */}
                             <section id="tech-stack" className="space-y-8">
-                                <h2 className="text-3xl font-jakarta font-black uppercase tracking-tighter">Tech Stack</h2>
+                                <h2 className="text-3xl md:text-4xl font-jakarta font-black uppercase tracking-tighter mb-6">Tech Stack</h2>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--border-subtle)] border border-[var(--border-subtle)]">
                                     <TechBadge name="Next.js 16" desc="App Router" />
                                     <TechBadge name="TypeScript" desc="Type Safety" />

@@ -59,7 +59,7 @@ const SectionHeader = ({
           {label}
         </span>
       )}
-      <h2 className="font-jakarta font-extrabold text-3xl md:text-4xl lg:text-5xl text-[var(--text-primary)] tracking-tight leading-[1.1] uppercase">
+      <h2 className="font-jakarta font-black text-3xl md:text-4xl lg:text-5xl text-[var(--text-primary)] tracking-tighter leading-[1.0] uppercase">
         {title}
       </h2>
     </div>

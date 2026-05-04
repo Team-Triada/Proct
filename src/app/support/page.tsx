@@ -24,6 +24,9 @@ export default function SupportPage() {
                     <h1 className="font-jakarta font-black text-5xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-tighter text-[var(--text-primary)] mb-6 uppercase">
                         Support.
                     </h1>
+                    <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl font-mono tracking-tight leading-relaxed">
+                        Official guidance for faculty quiz operations, admin system setup, and critical incident response.
+                    </p>
                 </section>
 
                 <div className="container mx-auto px-6 max-w-[1600px] py-12">
@@ -47,7 +50,7 @@ export default function SupportPage() {
                                     <div className="font-mono text-xs text-[var(--accent)] mb-6 uppercase tracking-widest flex items-center gap-2">
                                         <BookOpen size={14} /> Faculty
                                     </div>
-                                    <h2 className="font-jakarta font-bold text-2xl text-[var(--text-primary)] mb-6 uppercase tracking-tight">Quiz Ops</h2>
+                                    <h3 className="font-jakarta font-bold text-xl uppercase tracking-tight mb-3">Quiz Ops</h3>
                                     <ul className="space-y-4 font-mono text-sm text-[var(--text-muted)]">
                                         <li className="flex gap-3 items-start"><span className="text-[var(--text-primary)]">_</span> Quiz creation guidance</li>
                                         <li className="flex gap-3 items-start"><span className="text-[var(--text-primary)]">_</span> Grading matrix assistance</li>
@@ -59,7 +62,7 @@ export default function SupportPage() {
                                     <div className="font-mono text-xs text-[var(--accent)] mb-6 uppercase tracking-widest flex items-center gap-2">
                                         <Settings size={14} /> Admin
                                     </div>
-                                    <h2 className="font-jakarta font-bold text-2xl text-[var(--text-primary)] mb-6 uppercase tracking-tight">System Ops</h2>
+                                    <h3 className="font-jakarta font-bold text-xl uppercase tracking-tight mb-3">System Ops</h3>
                                     <ul className="space-y-4 font-mono text-sm text-[var(--text-muted)]">
                                         <li className="flex gap-3 items-start"><span className="text-[var(--text-primary)]">_</span> Root access onboarding</li>
                                         <li className="flex gap-3 items-start"><span className="text-[var(--text-primary)]">_</span> Department routing</li>
@@ -73,7 +76,7 @@ export default function SupportPage() {
                                     <div className="flex items-start gap-4">
                                         <AlertCircle className="text-[var(--accent)] shrink-0 mt-1" size={20} />
                                         <div>
-                                            <h3 className="font-jakarta font-bold text-[var(--text-primary)] text-xl uppercase tracking-tight mb-2">System Faults</h3>
+                                            <h3 className="font-jakarta font-bold text-xl text-[var(--text-primary)] uppercase tracking-tight mb-3">System Faults</h3>
                                             <p className="font-mono text-[var(--text-muted)] text-sm max-w-md">
                                                 For critical downtime, access restrictions, or suspected compromises, engage technical support immediately.
                                             </p>

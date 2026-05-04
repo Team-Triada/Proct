@@ -23,6 +23,9 @@ export default function ContactPage() {
                     <h1 className="font-jakarta font-black text-5xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-tighter text-[var(--text-primary)] mb-6 uppercase">
                         Contact.
                     </h1>
+                    <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl font-mono tracking-tight leading-relaxed">
+                        Reach out for institutional deployment, sales inquiries, or general questions about the platform.
+                    </p>
                 </section>
 
                 <div className="container mx-auto px-6 max-w-[1600px] py-12">
@@ -48,7 +51,7 @@ export default function ContactPage() {
                                         <div className="font-mono text-xs text-[var(--accent)] mb-6 uppercase tracking-widest">
                                             Institutional
                                         </div>
-                                        <h3 className="font-jakarta font-black text-3xl text-[var(--text-primary)] mb-6 uppercase tracking-tight">Deploy Proct</h3>
+                                        <h3 className="font-jakarta font-bold text-xl text-[var(--text-primary)] mb-3 uppercase tracking-tight">Deploy Proct</h3>
                                         <p className="font-mono text-[var(--text-muted)] mb-8 text-sm leading-relaxed">
                                             For colleges or universities interested in:
                                         </p>
@@ -73,7 +76,7 @@ export default function ContactPage() {
                                         <div className="font-mono text-xs text-[var(--accent)] mb-6 uppercase tracking-widest">
                                             Open Line
                                         </div>
-                                        <h3 className="font-jakarta font-black text-3xl text-[var(--text-primary)] mb-6 uppercase tracking-tight">Inquiries</h3>
+                                        <h3 className="font-jakarta font-bold text-xl text-[var(--text-primary)] mb-3 uppercase tracking-tight">Inquiries</h3>
                                         <p className="font-mono text-[var(--text-muted)] mb-6 text-sm leading-relaxed">
                                             For general questions, feedback, or technical collaboration opportunities.
                                         </p>

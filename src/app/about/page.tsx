@@ -20,11 +20,11 @@ export default function AboutPage() {
                         <div className="w-1.5 h-1.5 bg-white rounded-none" />
                         About Proct
                     </div>
-                    <h1 className="font-jakarta font-black text-5xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-tighter text-[var(--text-primary)] mb-8">
+                    <h1 className="font-jakarta font-black text-5xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-tighter text-[var(--text-primary)] mb-6 uppercase">
                         TRUST.<br />
                         <span className="text-[var(--text-muted)]">REENGINEERED.</span>
                     </h1>
-                    <p className="text-lg md:text-xl text-[var(--text-muted)] max-w-3xl font-mono tracking-tight leading-relaxed">
+                    <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl font-mono tracking-tight leading-relaxed">
                         Proct was created to solve a growing problem in academic institutions: the lack of trust in online internal assessments. Convenience cannot compromise integrity.
                     </p>
                 </section>

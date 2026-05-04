@@ -49,6 +49,9 @@ export default function FAQPage() {
                     <h1 className="font-jakarta font-black text-5xl md:text-7xl lg:text-[6rem] leading-[0.9] tracking-tighter text-[var(--text-primary)] mb-6 uppercase">
                         FAQ.
                     </h1>
+                    <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl font-mono tracking-tight leading-relaxed">
+                        Answers to common questions about Proct&apos;s design, privacy approach, device support, and integrity mechanics.
+                    </p>
                 </section>
 
                 <div className="container mx-auto px-6 max-w-[1600px] py-12">
@@ -75,7 +78,7 @@ export default function FAQPage() {
                                                 {String(i + 1).padStart(2, '0')}
                                             </div>
                                             <div>
-                                                <h3 className="font-jakarta font-bold text-xl md:text-2xl text-[var(--text-primary)] mb-4 uppercase tracking-tight group-hover:text-[var(--accent)] transition-colors">
+                                                <h3 className="font-jakarta font-bold text-xl text-[var(--text-primary)] mb-3 uppercase tracking-tight group-hover:text-[var(--accent)] transition-colors">
                                                     {faq.q}
                                                 </h3>
                                                 <p className="text-[var(--text-muted)] font-mono text-sm leading-relaxed max-w-2xl">
