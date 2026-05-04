@@ -60,7 +60,7 @@ export async function POST(
     // Fetch question type first to handle exemptions
     const question = await prisma.question.findUnique({
         where: { id: questionId },
-        select: { type: true, correctIndex: true, correctIndices: true, points: true }
+        select: { type: true, correctIndex: true, correctIndices: true, points: true, options: true }
     })
 
     if (!question) {
@@ -86,6 +86,21 @@ export async function POST(
         const limitTotal = quiz.totalDuration * 60
         if (elapsedTotal > limitTotal + 30) {
             return NextResponse.json({ error: 'Total time limit exceeded' }, { status: 403 })
+        }
+    }
+
+    // Validate shuffleMapping if present — must be a valid permutation of option indices
+    if (shuffleMapping !== undefined && shuffleMapping !== null) {
+        const optionCount = (JSON.parse(question.options) as unknown[]).length
+        const isValid =
+            Array.isArray(shuffleMapping) &&
+            shuffleMapping.length === optionCount &&
+            new Set(shuffleMapping).size === optionCount &&
+            (shuffleMapping as number[]).every(
+                (v: number) => Number.isInteger(v) && v >= 0 && v < optionCount
+            )
+        if (!isValid) {
+            return NextResponse.json({ error: 'Invalid shuffle mapping' }, { status: 400 })
         }
     }
 

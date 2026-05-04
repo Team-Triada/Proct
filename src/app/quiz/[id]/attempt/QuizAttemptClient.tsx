@@ -120,7 +120,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                 // Resume Logic or New Start
                 if (data.resume) {
                     violationSuppressUntilRef.current = Date.now() + 4000
-                    setCurrentQuestionIndex(Math.min(data.currentIndex + 1, data.questionOrder.length - 1))
+                    setCurrentQuestionIndex(Math.min(data.currentIndex, data.questionOrder.length - 1))
 
                     // Map existing answers to local state
                     const answerMap: Record<string, AnswerState> = {}

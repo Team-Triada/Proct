@@ -52,6 +52,13 @@ export async function POST(
 
     if (!student) return NextResponse.json({ error: 'Student profile not found' }, { status: 403 })
 
+    // Hard structural check: student must belong to the subject's semester.
+    // This is intentionally outside the targeting flags — the flags control
+    // quiz-level targeting, not the subject-semester boundary.
+    if (student.semester !== null && quiz.subject.semester !== student.semester) {
+        return NextResponse.json({ error: 'You are not eligible for this quiz' }, { status: 403 })
+    }
+
     const settings = await getPlatformSettings()
     const quizTargeting = {
         assignedBatches: quiz.assignedBatches,

@@ -49,10 +49,13 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'Invalid rollNumberFormat' }, { status: 400 })
     }
 
+    const safeEmailDomains = Array.isArray(allowedEmailDomains) ? allowedEmailDomains : []
+    const safeBatches = Array.isArray(availableBatches) ? availableBatches : []
+
     const settings = await prisma.platformSettings.upsert({
         where: { id: 1 },
         update: {
-            allowedEmailDomains: JSON.stringify(allowedEmailDomains ?? []),
+            allowedEmailDomains: JSON.stringify(safeEmailDomains),
             studentIdLabel: studentIdLabel ?? 'Campus ID',
             studentIdFormat: studentIdFormat ?? 'ANY',
             studentIdMinLength: studentIdMinLength ?? 1,
@@ -64,7 +67,7 @@ export async function PUT(request: Request) {
             rollNumberMaxLength: rollNumberMaxLength ?? 50,
             rollNumberRequired: rollNumberRequired ?? true,
             maxSemester: maxSemester ?? 8,
-            availableBatches: JSON.stringify(availableBatches ?? []),
+            availableBatches: JSON.stringify(safeBatches),
             maxBatchNumber: maxBatchNumber ?? 13,
             enableYearTargeting: enableYearTargeting ?? true,
             enableSemesterTargeting: enableSemesterTargeting ?? true,
@@ -84,7 +87,7 @@ export async function PUT(request: Request) {
             rollNumberMaxLength: rollNumberMaxLength ?? 50,
             rollNumberRequired: rollNumberRequired ?? true,
             maxSemester: maxSemester ?? 8,
-            availableBatches: JSON.stringify(availableBatches ?? []),
+            availableBatches: JSON.stringify(safeBatches),
             maxBatchNumber: maxBatchNumber ?? 13,
             enableYearTargeting: enableYearTargeting ?? true,
             enableSemesterTargeting: enableSemesterTargeting ?? true,
