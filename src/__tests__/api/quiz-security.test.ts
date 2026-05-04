@@ -24,6 +24,7 @@ vi.mock('@/lib/db', () => ({
         violationLog: {
             create: mockViolationCreate,
         },
+        $transaction: vi.fn().mockResolvedValue([]),
     },
 }))
 
@@ -105,9 +106,10 @@ describe('Quiz Security Flow', () => {
         })
 
         it('logs violation only after threshold (RELOAD_THRESHOLD = 2)', async () => {
-            // Mock attempt with 2 reloads already
+            // Mock attempt with 2 reloads already; after increment → 3, which exceeds threshold
             mockAttemptFindUnique.mockResolvedValue({ ...BASE_ATTEMPT, reloadCount: 2 })
-            
+            mockAttemptUpdate.mockResolvedValue({ reloadCount: 3 })
+
             const req = buildPOSTRequest('http://localhost')
             const res = await handleReload(req, buildParams('a1') as never)
             expect(res.status).toBe(200)

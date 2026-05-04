@@ -474,8 +474,9 @@ const CoreCapabilities = () => (
             glowIntensity={0.5}
             edgeSensitivity={30}
             coneSpread={22}
+            className="p-[1px]"
           >
-            <div className="flex flex-col md:flex-row h-full">
+            <div className="flex flex-col md:flex-row h-full rounded-[15px] overflow-hidden">
               <div className="p-6 md:p-8 md:w-3/5 flex flex-col justify-center">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 pill-red shadow-sm">
                    <Eye size={22}/>
@@ -520,8 +521,9 @@ const CoreCapabilities = () => (
             glowIntensity={0.5}
             edgeSensitivity={30}
             coneSpread={22}
+            className="p-[1px]"
           >
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full rounded-[15px] overflow-hidden">
               <div className="p-6 md:p-8 flex-1">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 pill-blue shadow-sm">
                    <Lock size={22}/>
@@ -561,8 +563,9 @@ const CoreCapabilities = () => (
             glowIntensity={0.5}
             edgeSensitivity={30}
             coneSpread={22}
+            className="p-[1px]"
           >
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full rounded-[15px] overflow-hidden">
               <div className="p-6 md:p-8 flex-1">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 pill-green shadow-sm">
                    <ShieldCheck size={22}/>
@@ -596,8 +599,9 @@ const CoreCapabilities = () => (
             glowIntensity={0.5}
             edgeSensitivity={30}
             coneSpread={22}
+            className="p-[1px]"
           >
-            <div className="flex flex-col md:flex-row h-full">
+            <div className="flex flex-col md:flex-row h-full rounded-[15px] overflow-hidden">
               <div className="p-6 md:p-8 md:w-1/2 flex flex-col justify-center">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 pill-yellow shadow-sm">
                    <Server size={22}/>
@@ -639,7 +643,9 @@ const CTASection = () => (
         System Ready
       </div>
       
-      <h2 className="font-jakarta font-black text-5xl md:text-7xl lg:text-[7rem] text-[var(--text-primary)] leading-[0.9] tracking-tighter mb-8 max-w-5xl mix-blend-plus-lighter">
+      <h2
+        className="font-jakarta font-black text-[clamp(2.6rem,10vw,4.25rem)] md:text-7xl lg:text-[7rem] text-[var(--text-primary)] leading-[0.95] tracking-tighter mb-8 max-w-5xl mix-blend-plus-lighter"
+      >
         NO MORE <br/>COMPROMISES.
       </h2>
       

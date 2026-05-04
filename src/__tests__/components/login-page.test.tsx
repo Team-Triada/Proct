@@ -36,12 +36,32 @@ async function renderPage() {
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 
+const MOCK_PUBLIC_SETTINGS = {
+    allowedEmailDomains: ['@yenepoya.edu.in'],
+    studentIdLabel: 'Campus ID',
+    studentIdFormat: 'NUMERIC',
+    studentIdMinLength: 5,
+    studentIdMaxLength: 5,
+    studentIdRequired: true,
+    rollNumberLabel: 'Registration Number',
+    rollNumberFormat: 'ANY',
+    rollNumberMinLength: 1,
+    rollNumberMaxLength: 50,
+    rollNumberRequired: true,
+    maxSemester: 8,
+    availableBatches: ['2022-25', '2023-26', '2024-27'],
+    maxBatchNumber: 13,
+}
+
 beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
     setTab(null)
     setRouter()
-    global.fetch = vi.fn()
+    global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(MOCK_PUBLIC_SETTINGS),
+    })
 })
 
 // ── Tab behaviour ──────────────────────────────────────────────────────────────
@@ -50,13 +70,13 @@ describe('Login page – tab routing', () => {
     it('defaults to Sign In tab when no ?tab param', async () => {
         setTab(null)
         await renderPage()
-        expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument()
+        expect(screen.getByRole('heading', { name: /identity verification/i })).toBeInTheDocument()
     })
 
     it('defaults to Register tab when ?tab=register', async () => {
         setTab('register')
         await renderPage()
-        expect(screen.getByRole('heading', { name: /create your account/i })).toBeInTheDocument()
+        expect(screen.getByRole('heading', { name: /enrollment/i })).toBeInTheDocument()
     })
 
     it('shows email and password fields on Sign In tab', async () => {
@@ -70,14 +90,14 @@ describe('Login page – tab routing', () => {
         setTab(null)
         await renderPage()
         fireEvent.click(screen.getByRole('button', { name: 'Register' }))
-        expect(await screen.findByRole('heading', { name: /create your account/i })).toBeInTheDocument()
+        expect(await screen.findByRole('heading', { name: /enrollment/i })).toBeInTheDocument()
     })
 
     it('switches back to Sign In tab from Register', async () => {
         setTab('register')
         await renderPage()
         fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
-        expect(await screen.findByRole('heading', { name: /welcome back/i })).toBeInTheDocument()
+        expect(await screen.findByRole('heading', { name: /identity verification/i })).toBeInTheDocument()
     })
 
     it('register tab shows "Already have an account?" text', async () => {
@@ -96,7 +116,7 @@ describe('Login page – tab routing', () => {
         setTab(null)
         await renderPage()
         fireEvent.click(screen.getByRole('button', { name: /create one/i }))
-        expect(await screen.findByRole('heading', { name: /create your account/i })).toBeInTheDocument()
+        expect(await screen.findByRole('heading', { name: /enrollment/i })).toBeInTheDocument()
     })
 
     it('"Sign in" link on register tab switches to login tab', async () => {
@@ -106,7 +126,7 @@ describe('Login page – tab routing', () => {
         const signInLinks = screen.getAllByRole('button', { name: /sign in/i })
         // The last one is the inline link (tab button is first)
         fireEvent.click(signInLinks[signInLinks.length - 1])
-        expect(await screen.findByRole('heading', { name: /welcome back/i })).toBeInTheDocument()
+        expect(await screen.findByRole('heading', { name: /identity verification/i })).toBeInTheDocument()
     })
 })
 
@@ -195,7 +215,7 @@ describe('Register form – submit', () => {
         }
 
         await userEvent.type(screen.getByPlaceholderText(/your full name/i), f.name)
-        await userEvent.type(screen.getByPlaceholderText(/campusid@yenepoya\.edu\.in/i), f.email)
+        await userEvent.type(screen.getByPlaceholderText(/you@yenepoya\.edu\.in/i), f.email)
         await userEvent.type(screen.getByPlaceholderText(/min 8 chars/i), f.password)
         await userEvent.type(screen.getByPlaceholderText(/e\.g\. 23BBCCED009/i), f.roll)
         await userEvent.type(screen.getByPlaceholderText(/5 digits/i), f.campusId)
@@ -228,16 +248,16 @@ describe('Register form – submit', () => {
         await fillAndSubmitRegister({ email: 'stu@gmail.com' })
         fireEvent.click(screen.getByRole('button', { name: /create account/i }))
 
-        expect(await screen.findByText(/yenepoya\.edu\.in/i)).toBeInTheDocument()
-        expect(global.fetch).not.toHaveBeenCalled()
+        expect(await screen.findByText(/email must use/i)).toBeInTheDocument()
+        expect(vi.mocked(global.fetch)).not.toHaveBeenCalledWith('/api/auth/register', expect.anything())
     })
 
     it('client-validates campus ID < 5 digits without hitting API', async () => {
         await fillAndSubmitRegister({ campusId: '123' })
         fireEvent.click(screen.getByRole('button', { name: /create account/i }))
 
-        expect(await screen.findByText(/campus id/i)).toBeInTheDocument()
-        expect(global.fetch).not.toHaveBeenCalled()
+        expect(await screen.findByText(/campus id must be/i)).toBeInTheDocument()
+        expect(vi.mocked(global.fetch)).not.toHaveBeenCalledWith('/api/auth/register', expect.anything())
     })
 
     it('client-validates password too short without hitting API', async () => {
@@ -245,7 +265,7 @@ describe('Register form – submit', () => {
         fireEvent.click(screen.getByRole('button', { name: /create account/i }))
 
         expect(await screen.findByText(/8 characters/i)).toBeInTheDocument()
-        expect(global.fetch).not.toHaveBeenCalled()
+        expect(vi.mocked(global.fetch)).not.toHaveBeenCalledWith('/api/auth/register', expect.anything())
     })
 
     it('shows API error from backend inline', async () => {

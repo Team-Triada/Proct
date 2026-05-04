@@ -46,7 +46,8 @@ model Quiz {
   title             String        @db.VarChar(255)
   description       String?       @db.Text
   assignedBatches   Json?         // Array of allowed batches e.g. ["2024-28", "2023-27"]
-  targetSection     String?       @db.VarChar(10) // Section restriction e.g. "A", "B"
+  targetSection     String?       @db.VarChar(10) // Batch number restriction e.g. "1", "2"
+  targetSemester    Int?          // Semester restriction e.g. 3 (null = all semesters)
   timePerQuestion   Int           @default(30)
   totalQuestions    Int           @default(10)
 
@@ -135,7 +136,29 @@ model ViolationLog {
   type        String      @db.VarChar(50)
   description String?     @db.Text
   occurredAt  DateTime    @default(now())
-  
+
   attemptId   String      @db.VarChar(30)
   attempt     QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
+
+model PlatformSettings {
+  id                   Int      @id @default(1)
+  allowedEmailDomains  String   @default("[]") @db.Text       // JSON string[], empty = allow all
+  studentIdLabel       String   @default("Campus ID") @db.VarChar(50)
+  studentIdFormat      String   @default("ANY") @db.VarChar(20) // NUMERIC, ALPHA, ALPHANUMERIC, ANY
+  studentIdMinLength   Int      @default(1)
+  studentIdMaxLength   Int      @default(50)
+  studentIdRequired    Boolean  @default(false)
+  rollNumberLabel      String   @default("Registration Number") @db.VarChar(50)
+  rollNumberFormat     String   @default("ANY") @db.VarChar(20)
+  rollNumberMinLength  Int      @default(1)
+  rollNumberMaxLength  Int      @default(50)
+  rollNumberRequired   Boolean  @default(true)
+  maxSemester             Int      @default(8)
+  availableBatches        String   @default("[]") @db.Text       // JSON string[], empty = free-text input
+  maxBatchNumber          Int      @default(13)
+  enableYearTargeting     Boolean  @default(true)  // Show year (batch) selector in quiz targeting
+  enableSemesterTargeting Boolean  @default(true)  // Show semester selector in quiz targeting
+  enableBatchTargeting    Boolean  @default(true)  // Show batch number selector in quiz targeting
+  updatedAt               DateTime @updatedAt
 }

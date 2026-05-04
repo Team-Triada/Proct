@@ -32,6 +32,14 @@ vi.mock('@/lib/utils', () => ({
     normalizeBatches: (bs: string[]) => bs.map((b: string) => b.toUpperCase().trim()),
 }))
 
+vi.mock('@/lib/settings', () => ({
+    getPlatformSettings: vi.fn().mockResolvedValue({
+        enableYearTargeting: true,
+        enableSemesterTargeting: true,
+        enableBatchTargeting: true,
+    }),
+}))
+
 // ── Sessions & base data ───────────────────────────────────────────────────────
 
 const STUDENT_SESSION = { user: { id: 's1', role: 'STUDENT', email: 's@y.edu.in' } }
@@ -136,7 +144,7 @@ describe('POST /api/quizzes/[id]/start', () => {
         mockUserFindUnique.mockResolvedValue({ ...BASE_STUDENT, batch: '2024-27' }) // wrong year
         const res = await POST(new Request('http://localhost'), buildRequest('q1') as never)
         expect(res.status).toBe(403)
-        expect((await res.json()).error).toMatch(/year is not authorized/i)
+        expect((await res.json()).error).toMatch(/not eligible/i)
     })
 
     it('403 – student has no batch assigned', async () => {
@@ -163,7 +171,7 @@ describe('POST /api/quizzes/[id]/start', () => {
         mockUserFindUnique.mockResolvedValue({ ...BASE_STUDENT, section: '1' }) // wrong batch
         const res = await POST(new Request('http://localhost'), buildRequest('q1') as never)
         expect(res.status).toBe(403)
-        expect((await res.json()).error).toMatch(/batch 3 only/i)
+        expect((await res.json()).error).toMatch(/not eligible/i)
     })
 
     it('200 – student section matches targetSection', async () => {

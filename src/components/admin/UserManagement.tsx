@@ -18,10 +18,22 @@ type User = {
 export default function UserManagement({ initialUsers }: { initialUsers: User[] }) {
     const router = useRouter()
     const [users, setUsers] = useState(initialUsers)
+    const [search, setSearch] = useState('')
+    const [roleFilter, setRoleFilter] = useState<'ALL' | 'ADMIN' | 'FACULTY' | 'STUDENT'>('ALL')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [deletingUser, setDeletingUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(false)
+
+    const filteredUsers = users.filter(u => {
+        if (roleFilter !== 'ALL' && u.role !== roleFilter) return false
+        if (search.trim()) {
+            const q = search.trim().toLowerCase()
+            const hay = `${u.name} ${u.email} ${u.rollNumber ?? ''} ${u.department ?? ''}`.toLowerCase()
+            if (!hay.includes(q)) return false
+        }
+        return true
+    })
 
     // Form State
     const [formData, setFormData] = useState({
@@ -134,18 +146,77 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
         }
     }
 
+    const roleCounts = {
+        ALL: users.length,
+        ADMIN: users.filter(u => u.role === 'ADMIN').length,
+        FACULTY: users.filter(u => u.role === 'FACULTY').length,
+        STUDENT: users.filter(u => u.role === 'STUDENT').length,
+    }
+
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <div>
                     <h1 className="text-xl font-semibold text-theme-primary">User Management</h1>
-                    <p className="text-theme-muted text-sm">{users.length} users</p>
+                    <p className="text-theme-muted text-sm">
+                        {filteredUsers.length} of {users.length} users
+                        {(search || roleFilter !== 'ALL') && ' matching filters'}
+                    </p>
                 </div>
-                <button onClick={openCreate} className="btn btn-primary">
+                <button onClick={openCreate} className="btn btn-primary shrink-0">
                     + Add User
                 </button>
             </div>
 
+            {/* Search + role filter */}
+            <div className="space-y-3 mb-5">
+                <div className="relative">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-muted pointer-events-none"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Search by name, email, or roll number…"
+                        className="input pl-9 w-full sm:max-w-sm"
+                    />
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                    {(['ALL', 'STUDENT', 'FACULTY', 'ADMIN'] as const).map(role => (
+                        <button
+                            key={role}
+                            type="button"
+                            onClick={() => setRoleFilter(role)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                                roleFilter === role
+                                    ? 'bg-accent text-white border-accent'
+                                    : 'border-theme text-theme-muted hover:border-accent hover:text-accent'
+                            }`}
+                        >
+                            {role === 'ALL' ? 'All' : role.charAt(0) + role.slice(1).toLowerCase()}
+                            <span className="ml-1 opacity-70">({roleCounts[role]})</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {filteredUsers.length === 0 ? (
+                <div className="card text-center py-12">
+                    <p className="text-theme-muted">No users match your search</p>
+                    <button
+                        type="button"
+                        onClick={() => { setSearch(''); setRoleFilter('ALL') }}
+                        className="text-accent text-sm mt-2 hover:underline"
+                    >
+                        Clear filters
+                    </button>
+                </div>
+            ) : (
             <div className="table-container">
                 <table className="w-full">
                     <thead>
@@ -157,7 +228,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-theme-subtle">
-                        {users.map((u) => (
+                        {filteredUsers.map((u) => (
                             <tr key={u.id} className="group">
                                 <td className="py-3 pl-2">
                                     <div className="font-medium text-theme-primary">{u.name}</div>
@@ -193,6 +264,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                     </tbody>
                 </table>
             </div>
+            )}
 
             {/* Modal */}
             {isModalOpen && (

@@ -55,9 +55,6 @@ export const Navbar = () => {
                             </motion.div>
                         </button>
 
-                        <Link href="/login?tab=register" className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors tracking-wide">
-                            Register
-                        </Link>
                         <Link
                             href="/login"
                             className="bg-[var(--accent)] hover:bg-[var(--accent-muted)] text-white px-6 py-2.5 rounded-full text-sm font-medium transition-all shadow-[0_0_20px_-4px_rgba(224,62,62,0.4)] hover:shadow-[0_0_30px_-4px_rgba(224,62,62,0.5)] ring-1 ring-white/10"
@@ -107,7 +104,6 @@ export const Navbar = () => {
                             <Link href="/faq" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">FAQ</Link>
                             <Link href="/support" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">Support</Link>
                             <Link href="/contact" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">Contact</Link>
-                            <Link href="/login?tab=register" onClick={() => setIsOpen(false)} className="text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-2 border-b border-[var(--border-subtle)]">Register</Link>
                             <Link
                                 href="/login"
                                 onClick={() => setIsOpen(false)}

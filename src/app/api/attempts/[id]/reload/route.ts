@@ -30,27 +30,47 @@ export async function POST(
 
     // Use atomic increment to avoid race conditions
     const RELOAD_THRESHOLD = 2
-    const newReloadCount = attempt.reloadCount + 1
+    const MAX_RETRIES = 3
+
+    let updatedAttempt: { reloadCount: number } | null = null
+    for (let attemptIndex = 0; attemptIndex < MAX_RETRIES; attemptIndex += 1) {
+        try {
+            updatedAttempt = await prisma.quizAttempt.update({
+                where: { id },
+                data: { reloadCount: { increment: 1 } },
+                select: { reloadCount: true }
+            })
+            break
+        } catch (error) {
+            const message = error instanceof Error ? error.message : ''
+            const isRetryable = message.includes('Record has changed since last read')
+            if (!isRetryable || attemptIndex === MAX_RETRIES - 1) {
+                throw error
+            }
+        }
+    }
+
+    if (!updatedAttempt) {
+        return NextResponse.json({ error: 'Unable to update reload count' }, { status: 500 })
+    }
+
+    const newReloadCount = updatedAttempt.reloadCount
     const shouldLogViolation = newReloadCount > RELOAD_THRESHOLD
 
-    // Single consolidated update with atomic increments
-    await prisma.quizAttempt.update({
-        where: { id },
-        data: {
-            reloadCount: { increment: 1 },
-            ...(shouldLogViolation && { violationCount: { increment: 1 } })
-        }
-    })
-
-    // Log violation separately
     if (shouldLogViolation) {
-        await prisma.violationLog.create({
-            data: {
-                attemptId: id,
-                type: 'PAGE_RELOAD',
-                description: `Page reloaded ${newReloadCount} times (threshold: ${RELOAD_THRESHOLD})`
-            }
-        })
+        await prisma.$transaction([
+            prisma.quizAttempt.update({
+                where: { id },
+                data: { violationCount: { increment: 1 } }
+            }),
+            prisma.violationLog.create({
+                data: {
+                    attemptId: id,
+                    type: 'PAGE_RELOAD',
+                    description: `Page reloaded ${newReloadCount} times (threshold: ${RELOAD_THRESHOLD})`
+                }
+            })
+        ])
     }
 
     let message = ''

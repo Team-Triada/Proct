@@ -58,10 +58,16 @@ Proct is a modern quiz platform built for educational institutions that prioriti
 
 ### For Admins
 
-- 👥 Complete user management
-- 📚 Subject approval workflow
-- 📊 Platform-wide analytics
-- ⚙️ System configuration
+- 👥 Complete user management (create, edit, delete with cascade-safe deletion)
+- 🔍 Search and filter across all admin tabs — users by name/email/roll, subjects by code/name/department/semester, quizzes by title/status
+- 📚 Subject approval workflow (approve/reject faculty-submitted subjects)
+- 📊 Platform-wide analytics dashboard:
+  - 7-day quiz attempt trend chart
+  - Attempts by subject ranking
+  - Recent violation feed
+  - Live stats: subjects, quizzes, students, attempts, violations
+- 📄 Paginated quiz list (25/page) with search and publish-status filter
+- ⚙️ Platform settings configuration
 
 ### Integrity Features
 
@@ -85,11 +91,12 @@ Proct is a modern quiz platform built for educational institutions that prioriti
 
 | Layer | Technology |
 |-------|------------|
-| **Framework** | Next.js 16 (App Router) |
+| **Framework** | Next.js 15 (App Router) |
 | **Language** | TypeScript |
 | **Database** | MySQL + Prisma ORM |
 | **Auth** | NextAuth.js (JWT) |
 | **Styling** | Tailwind CSS |
+| **Charts** | Recharts |
 | **Animations** | Framer Motion |
 | **UI Components** | Radix UI |
 
@@ -205,8 +212,10 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ### Admin
 
-- `GET/POST /api/admin/users` - User management
-- `PUT/DELETE /api/admin/users/[id]` - Update/delete user
+- `GET/POST /api/admin/users` - List / create users
+- `PUT/DELETE /api/admin/users/[id]` - Update / delete user
+- `GET/PUT /api/admin/settings` - Read / update platform settings
+- `GET /api/settings/public` - Public settings (registration toggle, etc.)
 - `POST /api/subjects/[id]/approve` - Approve subject
 - `POST /api/subjects/[id]/reject` - Reject subject
 

@@ -5,56 +5,96 @@ import { prisma } from '@/lib/db'
 import DashboardLayout from '@/components/DashboardLayout'
 import Link from 'next/link'
 import SubjectActions from '@/components/SubjectActions'
+import AdminSubjectsSearch from './AdminSubjectsSearch'
 
 const navigation = [
     { name: 'Overview', href: '/admin' },
     { name: 'Subjects', href: '/admin/subjects' },
     { name: 'Users', href: '/admin/users' },
     { name: 'All Quizzes', href: '/admin/quizzes' },
+    { name: 'Settings', href: '/admin/settings' },
 ]
 
-export default async function AdminSubjectsPage() {
+export default async function AdminSubjectsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ q?: string; semester?: string }>
+}) {
     const session = await getServerSession(authOptions)
-
-    if (!session || (session.user).role !== 'ADMIN') {
-        redirect('/login')
-    }
+    if (!session || (session.user).role !== 'ADMIN') redirect('/login')
 
     const user = session.user
+    const { q = '', semester = '' } = await searchParams
+    const search = q.trim().toLowerCase()
+    const semFilter = semester ? parseInt(semester, 10) : null
 
-    const subjects = await prisma.subject.findMany({
+    const allSubjects = await prisma.subject.findMany({
         include: {
             faculty: { select: { id: true, name: true, email: true } },
             quizzes: {
                 include: {
                     faculty: { select: { name: true } },
-                    _count: { select: { attempts: true } }
-                }
+                    _count: { select: { attempts: true } },
+                },
             },
-            _count: { select: { quizzes: true } }
+            _count: { select: { quizzes: true } },
         },
-        orderBy: [{ semester: 'asc' }, { code: 'asc' }]
+        orderBy: [{ semester: 'asc' }, { code: 'asc' }],
     })
 
-    // Filter pending and approved subjects
-    const pendingSubjects = subjects.filter((s) => s.isApproved === false)
-    const approvedSubjects = subjects.filter((s) => s.isApproved !== false)
+    const availableSemesters = [...new Set(allSubjects.map(s => s.semester))].sort((a, b) => a - b)
 
-    // Group approved by semester
+    // Apply filters in JS (subject counts are manageable)
+    const subjects = allSubjects.filter(s => {
+        if (semFilter && s.semester !== semFilter) return false
+        if (search) {
+            const hay = `${s.code} ${s.name} ${s.department ?? ''}`.toLowerCase()
+            if (!hay.includes(search)) return false
+        }
+        return true
+    })
+
+    const pendingSubjects = subjects.filter(s => s.isApproved === false)
+    const approvedSubjects = subjects.filter(s => s.isApproved !== false)
+
     const bySemester = approvedSubjects.reduce((acc: Record<number, typeof subjects>, s) => {
         if (!acc[s.semester]) acc[s.semester] = []
         acc[s.semester].push(s)
         return acc
     }, {})
 
+    const isFiltered = !!search || !!semFilter
+
     return (
         <DashboardLayout user={user} navigation={navigation}>
             <div className="space-y-6">
                 {/* Header */}
-                <div>
-                    <h1 className="text-2xl font-semibold text-theme-primary">All Subjects</h1>
-                    <p className="text-theme-muted text-sm">{subjects.length} subjects across all semesters</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-theme-primary">All Subjects</h1>
+                        <p className="text-theme-muted text-sm">
+                            {subjects.length} of {allSubjects.length} subjects
+                            {isFiltered && ' matching filters'}
+                        </p>
+                    </div>
                 </div>
+
+                {/* Search + filter */}
+                <AdminSubjectsSearch
+                    defaultQ={q}
+                    defaultSemester={semester}
+                    availableSemesters={availableSemesters}
+                />
+
+                {/* No results */}
+                {subjects.length === 0 && (
+                    <div className="card text-center py-12">
+                        <p className="text-theme-muted">No subjects match your filters</p>
+                        <Link href="/admin/subjects" className="text-accent text-sm mt-2 inline-block hover:underline">
+                            Clear filters
+                        </Link>
+                    </div>
+                )}
 
                 {/* Pending Subjects */}
                 {pendingSubjects.length > 0 && (
@@ -84,15 +124,13 @@ export default async function AdminSubjectsPage() {
                     </div>
                 )}
 
-                {/* Approved Subjects */}
+                {/* Approved Subjects grouped by semester */}
                 <div className="space-y-8">
                     {Object.entries(bySemester).map(([sem, subjs]) => (
                         <div key={sem}>
                             <h2 className="text-lg font-medium text-theme-primary mb-4 flex items-center gap-3">
                                 <span className="badge badge-primary">Semester {sem}</span>
-                                <span className="text-sm text-theme-muted font-normal">
-                                    {subjs.length} subjects
-                                </span>
+                                <span className="text-sm text-theme-muted font-normal">{subjs.length} subjects</span>
                             </h2>
 
                             <div className="space-y-4">
@@ -112,7 +150,7 @@ export default async function AdminSubjectsPage() {
                                                     {subject._count.quizzes} quizzes • {subject.faculty.length} faculty assigned
                                                 </p>
                                             </div>
-                                            <Link href={`/admin/subjects/${subject.id}`} className="btn btn-ghost btn-sm">
+                                            <Link href={`/admin/subjects/${subject.id}`} className="btn btn-ghost btn-sm shrink-0">
                                                 Manage
                                             </Link>
                                         </div>
@@ -125,9 +163,7 @@ export default async function AdminSubjectsPage() {
                                                     <span className="text-sm text-theme-muted italic">No faculty assigned</span>
                                                 ) : (
                                                     subject.faculty.map((f) => (
-                                                        <span key={f.id} className="badge badge-neutral">
-                                                            {f.name}
-                                                        </span>
+                                                        <span key={f.id} className="badge badge-neutral">{f.name}</span>
                                                     ))
                                                 )}
                                             </div>
@@ -151,12 +187,6 @@ export default async function AdminSubjectsPage() {
                                                                     by {quiz.faculty.name} • {quiz._count.attempts} attempts
                                                                 </p>
                                                             </div>
-                                                            <Link
-                                                                href={`/admin/quizzes/${quiz.id}`}
-                                                                className="btn btn-ghost text-xs"
-                                                            >
-                                                                View
-                                                            </Link>
                                                         </div>
                                                     ))}
                                                 </div>

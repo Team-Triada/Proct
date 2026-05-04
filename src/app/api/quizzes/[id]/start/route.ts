@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { normalizeBatch } from '@/lib/utils'
+import { matchesQuizTargeting } from '@/lib/quizFilters'
+import { getPlatformSettings } from '@/lib/settings'
 
 export async function POST(
     request: Request,
@@ -51,30 +52,15 @@ export async function POST(
 
     if (!student) return NextResponse.json({ error: 'Student profile not found' }, { status: 403 })
 
-    // 1. (Semester check removed)
-    // if (quiz.subject.semester !== student.semester) { ... }
-
-    // 2. Batch (Year) Check
-    const quizBatches = (quiz.assignedBatches as string[] | null) || []
-    if (quizBatches.length > 0) {
-        const studentBatch = normalizeBatch(student.batch || '')
-        if (!studentBatch) {
-            console.log(`[Quiz Start Denied] Student has no batch assigned`)
-            return NextResponse.json({ error: 'You do not have a year assigned' }, { status: 403 })
-        }
-
-        const normalizedQuizBatches = quizBatches.map(b => normalizeBatch(b))
-        if (!normalizedQuizBatches.includes(studentBatch)) {
-            console.log(`[Quiz Start Denied] Batch Mismatch. Allowed: ${normalizedQuizBatches}, Student: ${studentBatch}`)
-            return NextResponse.json({ error: 'Your year is not authorized for this quiz' }, { status: 403 })
-        }
+    const settings = await getPlatformSettings()
+    const quizTargeting = {
+        assignedBatches: quiz.assignedBatches,
+        targetSection: quiz.targetSection,
+        targetSemester: (quiz as { targetSemester?: number | null }).targetSemester ?? null,
     }
 
-    // 3. Section (Batch 1-12) Check
-    const targetSection = quiz.targetSection
-    if (targetSection && student.section !== targetSection) {
-        console.log(`[Quiz Start Denied] Section Mismatch. Quiz: ${targetSection}, Student: ${student.section}`)
-        return NextResponse.json({ error: `This quiz is for Batch ${targetSection} only` }, { status: 403 })
+    if (!matchesQuizTargeting(quizTargeting, student, settings)) {
+        return NextResponse.json({ error: 'You are not eligible for this quiz' }, { status: 403 })
     }
 
     // Check if student already has an attempt

@@ -8,6 +8,7 @@ import Link from 'next/link'
 const navigation = [
     { name: 'Overview', href: '/faculty' },
     { name: 'My Quizzes', href: '/faculty/quizzes' },
+    { name: 'Students', href: '/faculty/students' },
     { name: 'Create Quiz', href: '/faculty/quizzes/create' },
 ]
 
@@ -78,7 +79,7 @@ export default async function FacultyQuizzesPage() {
                                         const targetBatch = quiz.targetSection
 
                                         return (
-                                            <div key={quiz.id} className="card card-interactive group">
+                                            <div key={quiz.id} className="card card-interactive">
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="min-w-0 flex-1">
                                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -109,7 +110,7 @@ export default async function FacultyQuizzesPage() {
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center gap-2 shrink-0">
                                                         <Link
                                                             href={`/faculty/quizzes/${quiz.id}`}
                                                             className="btn btn-ghost text-sm"

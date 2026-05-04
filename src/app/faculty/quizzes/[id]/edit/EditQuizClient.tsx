@@ -38,6 +38,7 @@ interface Quiz {
     _count?: { attempts: number }
     targetSection: string | null
     assignedBatches: string[] | null
+    targetSemester: number | null
 }
 
 const questionTypes = [
@@ -59,14 +60,32 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [lastSaved, setLastSaved] = useState<Date | null>(null)
     const [hasChanges, setHasChanges] = useState(false)
+    const [maxSemester, setMaxSemester] = useState(8)
+    const [maxBatchNumber, setMaxBatchNumber] = useState(10)
+    const [availableBatches, setAvailableBatches] = useState<string[]>([])
+    const [enableYearTargeting, setEnableYearTargeting] = useState(true)
+    const [enableSemesterTargeting, setEnableSemesterTargeting] = useState(true)
+    const [enableBatchTargeting, setEnableBatchTargeting] = useState(true)
 
     // Fetch quiz data
     const fetchQuiz = useCallback(async () => {
         try {
-            const res = await fetch(`/api/quizzes/${quizId}`)
+            const [res, settingsRes] = await Promise.all([
+                fetch(`/api/quizzes/${quizId}`),
+                fetch('/api/settings/public')
+            ])
             if (!res.ok) throw new Error('Failed to fetch quiz')
             const data = await res.json()
-            setQuiz(data)
+            if (settingsRes.ok) {
+                const settings = await settingsRes.json()
+                setMaxSemester(settings.maxSemester || 8)
+                setMaxBatchNumber(settings.maxBatchNumber || 10)
+                setAvailableBatches(settings.availableBatches || [])
+                if (settings.enableYearTargeting !== undefined) setEnableYearTargeting(settings.enableYearTargeting)
+                if (settings.enableSemesterTargeting !== undefined) setEnableSemesterTargeting(settings.enableSemesterTargeting)
+                if (settings.enableBatchTargeting !== undefined) setEnableBatchTargeting(settings.enableBatchTargeting)
+            }
+            setQuiz({ ...data, targetSemester: data.targetSemester ?? null })
             // Parse questions with type handling
             setQuestions(data.questions.map((q: Question) => ({
                 ...q,
@@ -113,6 +132,7 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                     isPublished: quiz.isPublished,
                     targetSection: quiz.targetSection,
                     assignedBatches: quiz.assignedBatches || [],
+                    targetSemester: quiz.targetSemester,
                     questions: questions.map((q: Question) => ({
                         id: q.id,
                         text: q.text,
@@ -317,38 +337,61 @@ export default function EditQuizClient({ quizId }: { quizId: string }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="label">Year</label>
-                            <select
-                                value={(quiz.assignedBatches && quiz.assignedBatches[0]) || ''}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuiz({ assignedBatches: e.target.value ? [e.target.value] : [] })}
-                                className="input"
-                            >
-                                <option value="">All Years</option>
-                                <option value="2023-26">2023-26</option>
-                                <option value="2024-27">2024-27</option>
-                                <option value="2025-28">2025-28</option>
-                                <option value="2026-29">2026-29</option>
-                            </select>
+                    {(enableYearTargeting || enableSemesterTargeting || enableBatchTargeting) && (
+                        <div className={`grid gap-4 ${[enableYearTargeting, enableSemesterTargeting, enableBatchTargeting].filter(Boolean).length === 3 ? 'grid-cols-3' : [enableYearTargeting, enableSemesterTargeting, enableBatchTargeting].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                            {enableYearTargeting && (
+                                <div>
+                                    <label className="label">Year</label>
+                                    <select
+                                        value={(quiz.assignedBatches && quiz.assignedBatches[0]) || ''}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuiz({ assignedBatches: e.target.value ? [e.target.value] : [] })}
+                                        className="input"
+                                    >
+                                        <option value="">All Years</option>
+                                        {availableBatches.length > 0
+                                            ? availableBatches.map(b => <option key={b} value={b}>{b}</option>)
+                                            : ['2023-26', '2024-27', '2025-28', '2026-29'].map(b => <option key={b} value={b}>{b}</option>)
+                                        }
+                                    </select>
+                                </div>
+                            )}
+                            {enableSemesterTargeting && (
+                                <div>
+                                    <label className="label">Semester</label>
+                                    <select
+                                        value={quiz.targetSemester !== null && quiz.targetSemester !== undefined ? String(quiz.targetSemester) : ''}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuiz({ targetSemester: e.target.value ? parseInt(e.target.value) : null })}
+                                        className="input"
+                                    >
+                                        <option value="">All Semesters</option>
+                                        {Array.from({ length: maxSemester }, (_, i) => i + 1).map(n => (
+                                            <option key={n} value={String(n)}>Sem {n}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                            {enableBatchTargeting && (
+                                <div>
+                                    <label className="label">Batch</label>
+                                    <select
+                                        value={quiz.targetSection || ''}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuiz({ targetSection: e.target.value || null })}
+                                        className="input"
+                                    >
+                                        <option value="">All Batches</option>
+                                        {Array.from({ length: maxBatchNumber }, (_, i) => i + 1).map(n => (
+                                            <option key={n} value={String(n)}>Batch {n}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
-                        <div>
-                            <label className="label">Batch</label>
-                            <select
-                                value={quiz.targetSection || ''}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateQuiz({ targetSection: e.target.value || null })}
-                                className="input"
-                            >
-                                <option value="">All Batches</option>
-                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
-                                    <option key={n} value={String(n)}>Batch {n}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    <p className="text-xs text-theme-muted">
-                        Leave as &quot;All&quot; to allow everyone. Be careful with unrestricted quizzes.
-                    </p>
+                    )}
+                    {(enableYearTargeting || enableSemesterTargeting || enableBatchTargeting) && (
+                        <p className="text-xs text-theme-muted">
+                            Leave as &quot;All&quot; to allow everyone. Be careful with unrestricted quizzes.
+                        </p>
+                    )}
 
                     <div>
                         <label className="label">Description</label>

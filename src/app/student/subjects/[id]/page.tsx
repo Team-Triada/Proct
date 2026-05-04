@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import DashboardLayout from '@/components/DashboardLayout'
 import Link from 'next/link'
+import { matchesQuizTargeting } from '@/lib/quizFilters'
+import { getPlatformSettings } from '@/lib/settings'
 
 const navigation = [
     { name: 'Overview', href: '/student' },
@@ -30,6 +32,8 @@ export default async function SubjectPage({ params }: { params: Promise<{ id: st
         redirect('/login')
     }
 
+    const platformSettings = await getPlatformSettings()
+
     // Get subject with quizzes
     const subject = await prisma.subject.findUnique({
         where: { id },
@@ -45,46 +49,30 @@ export default async function SubjectPage({ params }: { params: Promise<{ id: st
         }
     })
 
-    // Security: Only show subjects from student's semester
-    if (!subject) {
-        redirect('/student')
+    if (!subject) redirect('/student')
+
+    // Security: subject must belong to the student's current semester
+    if (subject.semester !== student.semester) redirect('/student')
+
+    const studentProfile = {
+        batch: student.batch,
+        section: student.section,
+        semester: student.semester,
     }
 
-    // Filter quizzes by assignedBatches (Year) and targetSection (Batch)
-    const filteredQuizzes = subject.quizzes.filter(quiz => {
-        const yearRestrictions = (quiz.assignedBatches as string[] | null) || []
-        const batchRestriction = quiz.targetSection // This is the "Batch" (1-12)
-
-        // Check Year restriction
-        const hasYearRestriction = yearRestrictions.length > 0
-        let yearMatches = true
-        if (hasYearRestriction) {
-            if (!student.batch) {
-                yearMatches = false
-            } else {
-                const normalizedStudentBatch = student.batch.trim().toUpperCase()
-                const normalizedQuizBatches = yearRestrictions.map(b => b.trim().toUpperCase())
-                yearMatches = normalizedQuizBatches.includes(normalizedStudentBatch)
-            }
-        }
-
-        // Check Section (Batch 1-12) restriction
-        let sectionMatches = true
-        if (batchRestriction) {
-            sectionMatches = student.section === batchRestriction
-        }
-
-        // Quiz is visible only if all restrictions are satisfied (or not set)
-        return yearMatches && sectionMatches
-    })
+    // Filter quizzes by year, batch, and semester targeting
+    const filteredQuizzes = subject.quizzes.filter(quiz => matchesQuizTargeting(
+        { assignedBatches: quiz.assignedBatches, targetSection: quiz.targetSection, targetSemester: (quiz as { targetSemester?: number | null }).targetSemester ?? null },
+        studentProfile,
+        platformSettings
+    ))
 
     // Get student's attempts for this subject's quizzes
     const attempts = await prisma.quizAttempt.findMany({
         where: {
             studentId: user.id,
             quizId: { in: filteredQuizzes.map(q => q.id) }
-        },
-        include: { quiz: true }
+        }
     })
 
     const attemptMap = new Map(attempts.map(a => [a.quizId, a]))

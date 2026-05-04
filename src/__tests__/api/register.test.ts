@@ -23,6 +23,35 @@ vi.mock('bcryptjs', () => ({
     hash: vi.fn(() => 'hashed_pw'),
 }))
 
+vi.mock('@/lib/settings', () => ({
+    getPlatformSettings: vi.fn().mockResolvedValue({
+        allowedEmailDomains: ['@yenepoya.edu.in'],
+        studentIdLabel: 'Campus ID',
+        studentIdFormat: 'NUMERIC',
+        studentIdMinLength: 5,
+        studentIdMaxLength: 5,
+        studentIdRequired: true,
+        rollNumberLabel: 'Registration Number',
+        rollNumberFormat: 'ANY',
+        rollNumberMinLength: 1,
+        rollNumberMaxLength: 50,
+        rollNumberRequired: true,
+        maxSemester: 8,
+        availableBatches: [],
+        maxBatchNumber: 13,
+        enableYearTargeting: true,
+        enableSemesterTargeting: true,
+        enableBatchTargeting: true,
+    }),
+    validateFieldFormat: (value: string, format: string) => {
+        if (format === 'ANY') return true
+        if (format === 'NUMERIC') return /^\d+$/.test(value)
+        if (format === 'ALPHA') return /^[a-zA-Z]+$/.test(value)
+        if (format === 'ALPHANUMERIC') return /^[a-zA-Z0-9]+$/.test(value)
+        return true
+    },
+}))
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function buildRequest(body: Record<string, unknown>) {

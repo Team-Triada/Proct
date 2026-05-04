@@ -17,7 +17,7 @@ export async function POST(
     const { id } = await params
     const user = session.user
     const body = await request.json()
-    const { questionId, currentQuestionIndex, textAnswer, selectedIndices, selectedIndex } = body
+    const { questionId, currentQuestionIndex, textAnswer, selectedIndices, selectedIndex, shuffleMapping } = body
 
     // Verify Attempt exists and belongs to user
     const attempt = await prisma.quizAttempt.findUnique({
@@ -97,7 +97,10 @@ export async function POST(
         // Checkbox: partial scoring
         const correctIndices = JSON.parse(question.correctIndices || '[]') as number[]
         if (selectedIndices && Array.isArray(selectedIndices)) {
-            const selectedSet = new Set(selectedIndices)
+            const originalSelectedIndices = Array.isArray(shuffleMapping)
+                ? selectedIndices.map((idx: number) => shuffleMapping[idx])
+                : selectedIndices
+            const selectedSet = new Set(originalSelectedIndices)
             const correctSet = new Set(correctIndices)
 
             let correctMatches = 0
@@ -124,7 +127,10 @@ export async function POST(
     } else {
         // Multiple Choice / Dropdown: full points if correct
         if (selectedIndex !== null && selectedIndex !== undefined) {
-            isCorrect = selectedIndex === question.correctIndex
+            const originalSelectedIndex = Array.isArray(shuffleMapping)
+                ? shuffleMapping[selectedIndex]
+                : selectedIndex
+            isCorrect = originalSelectedIndex === question.correctIndex
             pointsAwarded = isCorrect ? question.points : 0
         }
     }
@@ -134,9 +140,15 @@ export async function POST(
         isCorrect,
         pointsAwarded,
         answeredAt: new Date(),
-        selectedIndices: selectedIndices !== undefined ? JSON.stringify(selectedIndices) : undefined,
+        selectedIndices: selectedIndices !== undefined
+            ? JSON.stringify(Array.isArray(shuffleMapping)
+                ? selectedIndices.map((idx: number) => shuffleMapping[idx])
+                : selectedIndices)
+            : undefined,
         textAnswer: textAnswer !== undefined ? textAnswer : undefined,
-        selectedIndex: selectedIndex !== undefined ? selectedIndex : undefined,
+        selectedIndex: selectedIndex !== undefined
+            ? (Array.isArray(shuffleMapping) ? shuffleMapping[selectedIndex] : selectedIndex)
+            : undefined,
     }
 
     await prisma.answer.upsert({

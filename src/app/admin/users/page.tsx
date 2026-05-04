@@ -10,6 +10,7 @@ const navigation = [
     { name: 'Subjects', href: '/admin/subjects' },
     { name: 'Users', href: '/admin/users' },
     { name: 'All Quizzes', href: '/admin/quizzes' },
+    { name: 'Settings', href: '/admin/settings' },
 ]
 
 export default async function AdminUsersPage() {

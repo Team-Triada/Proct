@@ -11,6 +11,7 @@ const navigation = [
     { name: 'Subjects', href: '/admin/subjects' },
     { name: 'Users', href: '/admin/users' },
     { name: 'All Quizzes', href: '/admin/quizzes' },
+    { name: 'Settings', href: '/admin/settings' },
 ]
 
 export default async function AdminSubjectDetail({
@@ -78,20 +79,32 @@ export default async function AdminSubjectDetail({
                             {subject.quizzes.length === 0 ? (
                                 <p className="text-theme-muted text-sm">No quizzes created yet.</p>
                             ) : (
-                                <div className="space-y-3">
-                                    {subject.quizzes.map((quiz) => (
-                                        <div key={quiz.id} className="p-3 bg-theme-tertiary rounded-lg flex justify-between items-center">
-                                            <div>
-                                                <h3 className="font-medium text-theme-primary">{quiz.title}</h3>
+                                <div className="space-y-2">
+                                    {subject.quizzes.slice(0, 20).map((quiz) => (
+                                        <Link
+                                            key={quiz.id}
+                                            href={`/faculty/quizzes/${quiz.id}`}
+                                            className="p-3 bg-theme-tertiary rounded-lg flex justify-between items-center hover:bg-theme-subtle transition-colors"
+                                        >
+                                            <div className="min-w-0">
+                                                <h3 className="font-medium text-theme-primary truncate">{quiz.title}</h3>
                                                 <p className="text-xs text-theme-muted">
                                                     {quiz.totalQuestions} qs • {quiz._count.attempts} attempts
                                                 </p>
                                             </div>
-                                            <span className={`badge ${quiz.isPublished ? 'badge-success' : 'badge-neutral'}`}>
+                                            <span className={`badge shrink-0 ml-3 ${quiz.isPublished ? 'badge-success' : 'badge-neutral'}`}>
                                                 {quiz.isPublished ? 'Live' : 'Draft'}
                                             </span>
-                                        </div>
+                                        </Link>
                                     ))}
+                                    {subject.quizzes.length > 20 && (
+                                        <p className="text-xs text-theme-muted text-center pt-1">
+                                            +{subject.quizzes.length - 20} more —{' '}
+                                            <Link href="/admin/quizzes" className="text-accent hover:underline">
+                                                view all in quizzes page
+                                            </Link>
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>

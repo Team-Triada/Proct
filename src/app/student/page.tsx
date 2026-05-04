@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import DashboardLayout from '@/components/DashboardLayout'
 import Link from 'next/link'
+import { matchesQuizTargeting } from '@/lib/quizFilters'
+import { getPlatformSettings } from '@/lib/settings'
 
 const navigation = [
     { name: 'Overview', href: '/student' },
@@ -26,18 +28,20 @@ export default async function StudentDashboard() {
     })
 
     const semester = student?.semester || 1
-    const studentBatch = student?.batch || null
-    const studentSection = student?.section || null
+    const studentProfile = {
+        batch: student?.batch || null,
+        section: student?.section || null,
+        semester: student?.semester || null,
+    }
 
+    const platformSettings = await getPlatformSettings()
 
-    // Get subjects - fetch all published quizzes, filter in memory
+    // Fetch subjects for the student's current semester only
     const rawSubjects = await prisma.subject.findMany({
-        // where: { semester }, // Removed semester filtering
+        where: { semester },
         include: {
             quizzes: {
-                where: {
-                    isPublished: true,
-                },
+                where: { isPublished: true },
                 include: {
                     faculty: { select: { name: true } },
                     _count: { select: { questions: true } }
@@ -48,45 +52,34 @@ export default async function StudentDashboard() {
         orderBy: { code: 'asc' }
     })
 
-    // Filter quizzes by assignedBatches (Year) and targetSection (Batch) in memory
+    // Filter quizzes by year, batch, and semester targeting
     const subjects = rawSubjects.map(subject => ({
         ...subject,
-        quizzes: subject.quizzes.filter(quiz => {
-            const yearRestrictions = (quiz.assignedBatches as string[] | null) || []
-            const batchRestriction = quiz.targetSection // This is the "Batch" (1-12)
-
-            // Check Year restriction
-            const hasYearRestriction = yearRestrictions.length > 0
-            let yearMatches = true
-            if (hasYearRestriction) {
-                if (!studentBatch) {
-                    yearMatches = false
-                } else {
-                    const normalizedStudentBatch = studentBatch.trim().toUpperCase()
-                    const normalizedQuizBatches = yearRestrictions.map(b => b.trim().toUpperCase())
-                    yearMatches = normalizedQuizBatches.includes(normalizedStudentBatch)
-                }
-            }
-
-            // Check Section (Batch 1-12) restriction
-            let sectionMatches = true
-            if (batchRestriction) {
-                sectionMatches = studentSection === batchRestriction
-            }
-
-            // Quiz is visible only if all restrictions are satisfied (or not set)
-            return yearMatches && sectionMatches
-        })
+        quizzes: subject.quizzes.filter(quiz => matchesQuizTargeting(
+            { assignedBatches: quiz.assignedBatches, targetSection: quiz.targetSection, targetSemester: (quiz as { targetSemester?: number | null }).targetSemester ?? null },
+            studentProfile,
+            platformSettings
+        ))
     }))
 
     // Get student's attempts
     const attempts = await prisma.quizAttempt.findMany({
         where: { studentId: user.id },
-        include: { quiz: true }
+        include: {
+            quiz: {
+                include: {
+                    faculty: { select: { name: true } },
+                    _count: { select: { questions: true } }
+                }
+            }
+        }
     })
 
     const completedAttempts = attempts.filter(a => a.status !== 'IN_PROGRESS')
     const attemptedQuizIds = attempts.map(a => a.quizId)
+    const inProgressAttemptIds = attempts
+        .filter(a => a.status === 'IN_PROGRESS')
+        .map(a => a.quizId)
 
     // Stats
     const stats = {
@@ -94,9 +87,16 @@ export default async function StudentDashboard() {
         totalQuizzes: subjects.reduce((acc, s) => acc + s.quizzes.length, 0),
         completed: completedAttempts.length,
         available: subjects.reduce((acc, s) =>
-            acc + s.quizzes.filter(q => !attemptedQuizIds.includes(q.id)).length, 0
+            acc + s.quizzes.filter(q => !attemptedQuizIds.includes(q.id) || inProgressAttemptIds.includes(q.id)).length, 0
         )
     }
+
+    const subjectCodeByQuizId = new Map<string, string>()
+    subjects.forEach(subject => {
+        subject.quizzes.forEach(quiz => {
+            subjectCodeByQuizId.set(quiz.id, subject.code)
+        })
+    })
 
     return (
         <DashboardLayout user={user} navigation={navigation}>
@@ -193,31 +193,44 @@ export default async function StudentDashboard() {
                             Available Quizzes
                         </h2>
                         <div className="space-y-3">
-                            {subjects.flatMap(subject =>
-                                subject.quizzes
-                                    .filter(q => !attemptedQuizIds.includes(q.id))
-                                    .map(quiz => (
-                                        <Link
-                                            key={quiz.id}
-                                            href={`/quiz/${quiz.id}/instructions`}
-                                            className="card card-interactive flex items-center justify-between"
-                                        >
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="badge badge-neutral">{subject.code}</span>
-                                                    {quiz.enforcementMode === 'STRICT' && (
-                                                        <span className="badge badge-danger">Strict</span>
-                                                    )}
-                                                </div>
-                                                <h3 className="font-medium text-theme-primary">{quiz.title}</h3>
-                                                <p className="text-sm text-theme-muted">
-                                                    {quiz._count.questions} questions • {quiz.timePerQuestion}s each • by {quiz.faculty.name}
-                                                </p>
+                            {([
+                                ...subjects.flatMap(subject =>
+                                    subject.quizzes
+                                        .filter(q => !attemptedQuizIds.includes(q.id))
+                                        .map(quiz => ({ quiz, subject: subject as { code: string }, inProgress: false }))
+                                ),
+                                ...attempts
+                                    .filter(a => a.status === 'IN_PROGRESS')
+                                    .map(attempt => ({
+                                        quiz: attempt.quiz,
+                                        subject: { code: subjectCodeByQuizId.get(attempt.quizId) || 'SUB' },
+                                        inProgress: true,
+                                    })),
+                            ] as { quiz: typeof subjects[0]['quizzes'][0]; subject: { code: string }; inProgress: boolean }[])
+                                .map(({ quiz, subject, inProgress }) => (
+                                    <Link
+                                        key={quiz.id}
+                                        href={`/quiz/${quiz.id}/instructions`}
+                                        className="card card-interactive flex items-center justify-between"
+                                    >
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="badge badge-neutral">{subject.code}</span>
+                                                {inProgress && (
+                                                    <span className="badge badge-warning">In Progress</span>
+                                                )}
+                                                {quiz.enforcementMode === 'STRICT' && (
+                                                    <span className="badge badge-danger">Strict</span>
+                                                )}
                                             </div>
-                                            <span className="btn btn-primary text-sm">Start</span>
-                                        </Link>
-                                    ))
-                            )}
+                                            <h3 className="font-medium text-theme-primary">{quiz.title}</h3>
+                                            <p className="text-sm text-theme-muted">
+                                                {quiz._count?.questions ?? quiz.totalQuestions} questions • {quiz.timePerQuestion}s each • by {quiz.faculty.name}
+                                            </p>
+                                        </div>
+                                        <span className="btn btn-primary text-sm">{inProgress ? 'Continue' : 'Start'}</span>
+                                    </Link>
+                                ))}
                         </div>
                     </div>
                 )}
