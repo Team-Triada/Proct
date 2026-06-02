@@ -89,14 +89,14 @@ describe('Login page – tab routing', () => {
     it('switches to Register tab when Register button is clicked', async () => {
         setTab(null)
         await renderPage()
-        fireEvent.click(screen.getByRole('button', { name: 'Register' }))
+        fireEvent.click(screen.getByRole('tab', { name: 'Register' }))
         expect(await screen.findByRole('heading', { name: /enrollment/i })).toBeInTheDocument()
     })
 
     it('switches back to Sign In tab from Register', async () => {
         setTab('register')
         await renderPage()
-        fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+        fireEvent.click(screen.getByRole('tab', { name: 'Sign In' }))
         expect(await screen.findByRole('heading', { name: /identity verification/i })).toBeInTheDocument()
     })
 
