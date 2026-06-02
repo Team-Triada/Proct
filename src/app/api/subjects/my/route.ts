@@ -45,8 +45,8 @@ export async function POST(request: Request) {
         const body = await request.json()
         const { code, name, semester, department } = body
 
-        if (!code || !name || !semester) {
-            return NextResponse.json({ error: 'Code, name, and semester are required' }, { status: 400 })
+        if (!code) {
+            return NextResponse.json({ error: 'Subject code is required' }, { status: 400 })
         }
 
         // Check if subject with this code already exists
@@ -62,6 +62,10 @@ export async function POST(request: Request) {
                 include: { subjects: true }
             })
             return NextResponse.json(existing)
+        }
+
+        if (!name || !semester) {
+            return NextResponse.json({ error: 'Name and semester are required for new subjects' }, { status: 400 })
         }
 
         // Create new subject and connect to faculty

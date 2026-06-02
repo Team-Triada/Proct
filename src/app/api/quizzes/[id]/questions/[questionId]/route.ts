@@ -65,7 +65,7 @@ export async function PUT(
         where: { id: questionId },
         data: {
             ...(text && { text }),
-            ...(options && { options }),
+            ...(options && { options: JSON.stringify(options) }),
             ...(correctIndex !== undefined && { correctIndex }),
             ...(points !== undefined && { points })
         }
@@ -131,7 +131,7 @@ export async function POST(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { text, options, correctIndex, points } = body
+    const { text, type, options, correctIndex, correctIndices, points } = body
 
     // Get max order
     const maxOrder = await prisma.question.aggregate({
@@ -143,8 +143,10 @@ export async function POST(
         data: {
             quizId: id,
             text,
-            options,
-            correctIndex,
+            type: type || 'MULTIPLE_CHOICE',
+            options: JSON.stringify(options || []),
+            correctIndex: correctIndex ?? 0,
+            correctIndices: JSON.stringify(correctIndices || []),
             points: points || 1,
             order: (maxOrder._max.order || 0) + 1
         }

@@ -137,8 +137,10 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
     if (!animated) return;
     const angleStart = 110;
     const angleEnd = 465;
-    setSweepActive(true);
-    setCursorAngle(angleStart);
+    requestAnimationFrame(() => {
+      setSweepActive(true);
+      setCursorAngle(angleStart);
+    });
 
     animateValue({ duration: 500, onUpdate: v => setEdgeProximity(v / 100) });
     animateValue({

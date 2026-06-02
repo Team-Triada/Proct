@@ -120,5 +120,5 @@ export async function POST(request: NextRequest) {
         }
     })
 
-    return NextResponse.json(quiz)
+    return NextResponse.json(quiz, { status: 201 })
 }
