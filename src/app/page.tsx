@@ -637,41 +637,44 @@ const CTASection = () => (
     {/* Center Horizontal / Vertical Hairlines */}
     <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-[var(--border-subtle)]" />
     
-    <div className="page-container relative z-10 py-32 md:py-48 flex flex-col items-center text-center">
-      <div className="inline-flex items-center gap-2 px-3 py-1 mb-8 border border-[var(--accent)]/30 bg-[var(--accent)]/5 text-[var(--accent)] text-xs font-mono font-bold tracking-widest uppercase">
+    <div className="page-container relative z-10 py-16 sm:py-24 md:py-36 lg:py-48 flex flex-col items-center text-center">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-6 sm:mb-8 border border-[var(--accent)]/30 bg-[var(--accent)]/5 text-[var(--accent)] text-xs font-mono font-bold tracking-widest uppercase">
         <div className="w-1.5 h-1.5 bg-[var(--accent)] rounded-none animate-pulse" />
         System Ready
       </div>
-      
+
       <h2
-        className="font-jakarta font-black text-[clamp(2.6rem,10vw,4.25rem)] md:text-7xl lg:text-[7rem] text-[var(--text-primary)] leading-[0.95] tracking-tighter mb-8 max-w-5xl mix-blend-plus-lighter"
+        className="font-jakarta font-black text-[clamp(1.9rem,8.5vw,4.25rem)] md:text-7xl lg:text-[7rem] text-[var(--text-primary)] leading-[0.95] tracking-tighter mb-6 sm:mb-8 max-w-5xl mix-blend-plus-lighter"
       >
-        NO MORE <br/>COMPROMISES.
+        NO MORE<br />COMPROMISES.
       </h2>
-      
-      <p className="text-[var(--text-secondary)] text-lg md:text-xl mb-12 max-w-2xl font-mono tracking-tight">
-        EXACT ASSESSMENTS. ZERO TOLERANCE.<br/>DEPLOY PROCT TODAY.
+
+      <p className="text-[var(--text-secondary)] text-sm sm:text-lg md:text-xl mb-10 sm:mb-12 max-w-[17rem] sm:max-w-2xl font-mono tracking-tight leading-snug sm:leading-normal">
+        EXACT ASSESSMENTS. ZERO TOLERANCE.{' '}
+        <br className="hidden sm:block" />
+        DEPLOY PROCT TODAY.
       </p>
-      
-      <div className="flex flex-col sm:flex-row gap-0 border border-[var(--border-subtle)] w-full max-w-lg bg-[var(--bg-secondary)] shadow-2xl relative group">
+
+      {/* Mobile: stacked buttons with gap + individual borders for clear separation */}
+      {/* sm+: original grouped border container */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 w-full max-w-xs sm:max-w-lg sm:border sm:border-[var(--border-subtle)] sm:bg-[var(--bg-secondary)] sm:shadow-2xl relative group">
         <Link
           href="/login"
-          className="flex-1 relative px-8 py-5 bg-white hover:bg-gray-200 text-black font-black text-lg transition-colors flex items-center justify-center gap-2 uppercase tracking-widest"
+          className="flex-1 relative px-8 py-4 sm:py-5 bg-white hover:bg-gray-200 text-black font-black text-base sm:text-lg transition-colors flex items-center justify-center gap-2 uppercase tracking-widest min-h-[52px] border border-[var(--border-subtle)] sm:border-0 shadow-lg sm:shadow-none"
         >
           Deploy Now
           <ArrowRight size={18} />
         </Link>
         <div className="w-px bg-[var(--border-subtle)] hidden sm:block" />
-        <div className="h-px bg-[var(--border-subtle)] block sm:hidden" />
         <Link
           href="/contact"
-          className="flex-1 relative px-8 py-5 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold text-lg transition-colors uppercase tracking-widest group-hover:text-white"
+          className="flex-1 relative px-8 py-4 sm:py-5 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold text-base sm:text-lg transition-colors flex items-center justify-center uppercase tracking-widest group-hover:text-white min-h-[52px] border border-[var(--border-subtle)] sm:border-0 shadow-lg sm:shadow-none"
         >
           Sales
         </Link>
 
-        {/* Glow behind buttons */}
-        <div className="absolute -inset-1 bg-[var(--accent)] blur-xl opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none -z-10" />
+        {/* Glow behind buttons — desktop only */}
+        <div className="absolute -inset-1 bg-[var(--accent)] blur-xl opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none -z-10 hidden sm:block" />
       </div>
     </div>
   </section>
