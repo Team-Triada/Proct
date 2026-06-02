@@ -37,7 +37,7 @@ export function matchesQuizTargeting(
 
     // 1. Year (batch) check
     if (enableYearTargeting) {
-        const yearRestrictions = (quiz.assignedBatches as string[] | null) || []
+        const yearRestrictions = Array.isArray(quiz.assignedBatches) ? quiz.assignedBatches as string[] : []
         if (yearRestrictions.length > 0) {
             if (!student.batch) return false
             const studentYear = normalizeBatch(student.batch)

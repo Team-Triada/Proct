@@ -80,7 +80,7 @@ describe('POST /api/quizzes – create quiz', () => {
 
     it('201 – faculty creates quiz successfully', async () => {
         const res = await POST(buildRequest(buildQuizPayload()) as never)
-        expect(res.status).toBe(200) // route returns 200 on create (no explicit 201)
+        expect(res.status).toBe(201)
         const body = await res.json()
         expect(body.id).toBe('q1')
     })

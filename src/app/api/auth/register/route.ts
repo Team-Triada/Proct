@@ -14,6 +14,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Name, email and password are required" }, { status: 400 })
         }
 
+        // Check duplicate email early so users know before filling all fields
+        const existingEmailEarly = await prisma.user.findUnique({ where: { email } })
+        if (existingEmailEarly) {
+            return NextResponse.json({ error: "Email already registered" }, { status: 409 })
+        }
+
         if (!batch || !semester || !section) {
             return NextResponse.json({ error: "Year, semester and batch are required" }, { status: 400 })
         }
@@ -97,11 +103,6 @@ export async function POST(request: Request) {
                 { error: `Batch must be between 1 and ${settings.maxBatchNumber}` },
                 { status: 400 }
             )
-        }
-
-        const existingEmail = await prisma.user.findUnique({ where: { email } })
-        if (existingEmail) {
-            return NextResponse.json({ error: "Email already registered" }, { status: 409 })
         }
 
         if (rollNumber) {
