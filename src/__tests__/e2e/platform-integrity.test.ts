@@ -130,9 +130,9 @@ describe('E2E Platform Flow', () => {
 
         const res = await createQuiz(req)
         const data = await res.json()
-        if (res.status !== 200) console.error('Quiz Create Error:', data)
-        
-        expect(res.status).toBe(200)
+        if (res.status !== 201) console.error('Quiz Create Error:', data)
+
+        expect(res.status).toBe(201)
         quizId = data.id
     })
 
