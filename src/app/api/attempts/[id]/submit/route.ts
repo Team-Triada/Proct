@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { LATENCY_GRACE_SECONDS } from '@/lib/attemptTiming'
 
 export async function POST(
     request: Request,
@@ -29,15 +30,30 @@ export async function POST(
         return NextResponse.json({ error: 'Quiz already submitted', completed: true }, { status: 200 })
     }
 
-    // Validate Time
-    const timeLimitSeconds = attempt.quiz.totalQuestions * attempt.quiz.timePerQuestion
+    // Validate time. A submit is never rejected — refusing it would leave the
+    // attempt stuck IN_PROGRESS with no way for the student to finish. Late
+    // *answers* are already rejected by the save path, so what matters here is
+    // recording the overage durably so faculty can see it, rather than emitting
+    // a console warning nobody reads.
     const now = new Date()
-    const elapsedSeconds = Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000)
+    const totalBudgetSeconds =
+        attempt.quiz.timingMode === 'TOTAL_DURATION' && attempt.quiz.totalDuration
+            ? attempt.quiz.totalDuration * 60
+            : attempt.quiz.totalQuestions * attempt.quiz.timePerQuestion
 
-    // Allow 60 seconds grace period for latency
-    if (elapsedSeconds > timeLimitSeconds + 60) {
-        // Log expired but still process
-        console.warn(`[AUDIT] Late submission: attempt=${id} elapsed=${elapsedSeconds}s limit=${timeLimitSeconds}s overage=${elapsedSeconds - timeLimitSeconds}s`)
+    const elapsedSeconds = Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000)
+    const isUnbounded = attempt.quiz.timingMode === 'NO_TIME_LIMIT'
+    const overageSeconds = isUnbounded ? 0 : Math.max(0, elapsedSeconds - totalBudgetSeconds)
+    const submittedLate = overageSeconds > LATENCY_GRACE_SECONDS
+
+    if (submittedLate) {
+        await prisma.violationLog.create({
+            data: {
+                attemptId: id,
+                type: 'LATE_SUBMISSION',
+                description: `Submitted ${overageSeconds}s past the ${totalBudgetSeconds}s limit`,
+            },
+        })
     }
 
     // Calculate Score (Synchronous)
@@ -47,7 +63,7 @@ export async function POST(
     })
 
     let score = 0
-    answers.forEach((a: any) => {
+    answers.forEach(a => {
         if (a.pointsAwarded !== null) {
             score += a.pointsAwarded
         }
@@ -58,15 +74,19 @@ export async function POST(
         where: { id },
         data: {
             status: 'COMPLETED',
-            submittedAt: new Date(),
-            score
+            submittedAt: now,
+            score,
+            submittedLate,
+            overageSeconds
         }
     })
 
+    // Never return the score when faculty hid it — the client cannot be trusted
+    // to honour the flag, so withhold the value itself.
     return NextResponse.json({
         completed: true,
-        score,
-        totalPoints: attempt.totalPoints,
+        score: attempt.quiz.showScore ? score : null,
+        totalPoints: attempt.quiz.showScore ? attempt.totalPoints : null,
         showScore: attempt.quiz.showScore
     })
 }

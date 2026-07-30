@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 const VIOLATION_LABELS: Record<string, string> = {
     TAB_SWITCH: 'Tab Switch',
@@ -66,40 +67,41 @@ export interface QuizMeta {
     subjectName: string
 }
 
-function downloadCSV(quiz: QuizMeta, attempts: AttemptRow[]) {
-    const header = ['Name', 'Roll Number', 'Email', 'Status', 'Score', 'Total Points', 'Score %', 'Violations', 'Violation Types', 'Date']
-    const rows = attempts.map(a => [
-        a.student.name,
-        a.student.rollNumber || '',
-        a.student.email,
-        a.status,
-        String(a.score),
-        String(a.totalPoints),
-        a.totalPoints > 0 ? ((a.score / a.totalPoints) * 100).toFixed(1) + '%' : '0%',
-        String(a.violationCount),
-        [...new Set(a.violations.map(v => VIOLATION_LABELS[v.type] ?? v.type))].join('; '),
-        new Date(a.startedAt).toLocaleString(),
-    ])
-
-    const csv = [header, ...rows]
-        .map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
-        .join('\n')
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${quiz.title.replace(/[^a-z0-9]/gi, '_')}_results.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-}
-
 export default function ResultsClient({ quiz, attempts, quizId }: {
     quiz: QuizMeta
     attempts: AttemptRow[]
     quizId: string
 }) {
+    const router = useRouter()
     const [expandedAttempt, setExpandedAttempt] = useState<string | null>(null)
+    const [resettingId, setResettingId] = useState<string | null>(null)
+    const [resetError, setResetError] = useState<string | null>(null)
+
+    const handleReset = async (attempt: AttemptRow) => {
+        const confirmed = window.confirm(
+            `Clear ${attempt.student.name}'s attempt?\n\n` +
+            `Their answers, score (${attempt.score}/${attempt.totalPoints}) and ` +
+            `${attempt.violationCount} violation log(s) will be permanently deleted, ` +
+            `and they will be able to retake this quiz. This cannot be undone.`
+        )
+        if (!confirmed) return
+
+        setResetError(null)
+        setResettingId(attempt.id)
+        try {
+            const res = await fetch(`/api/attempts/${attempt.id}/reset`, { method: 'POST' })
+            const data = await res.json()
+            if (!res.ok) {
+                setResetError(data.error || 'Could not reset that attempt.')
+                return
+            }
+            router.refresh()
+        } catch {
+            setResetError('Could not reach the server. Please try again.')
+        } finally {
+            setResettingId(null)
+        }
+    }
 
     const completedCount = attempts.filter(a => a.status === 'COMPLETED').length
     const avgScore = completedCount > 0
@@ -120,16 +122,35 @@ export default function ResultsClient({ quiz, attempts, quizId }: {
                         <h1 className="text-2xl font-bold text-theme-primary">{quiz.title}</h1>
                         <p className="text-theme-muted text-sm">{quiz.subjectCode} · {quiz.subjectName}</p>
                     </div>
-                    <button
-                        onClick={() => downloadCSV(quiz, attempts)}
-                        className="btn btn-primary shrink-0 flex items-center gap-2"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download CSV
-                    </button>
+                    {/* Exports are generated server-side so they include every
+                        column, not just what this page happened to load. */}
+                    <div className="flex shrink-0 gap-2">
+                        <a
+                            href={`/api/quizzes/${quizId}/results/export?format=summary`}
+                            className="btn btn-primary flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Scores CSV
+                        </a>
+                        <a
+                            href={`/api/quizzes/${quizId}/results/export?format=answers`}
+                            className="btn btn-secondary flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Answers CSV
+                        </a>
+                    </div>
                 </div>
+
+                {resetError && (
+                    <div role="alert" className="card p-4 border border-danger/30 bg-danger/5 text-sm text-danger">
+                        {resetError}
+                    </div>
+                )}
 
                 {/* Summary stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -217,9 +238,19 @@ export default function ResultsClient({ quiz, attempts, quizId }: {
                                                 {new Date(attempt.startedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </td>
                                             <td className="px-5 py-3">
-                                                <Link href={`/faculty/quizzes/${quizId}/grade/${attempt.id}`} className="btn btn-ghost btn-sm">
-                                                    Grade
-                                                </Link>
+                                                <div className="flex items-center gap-1">
+                                                    <Link href={`/faculty/quizzes/${quizId}/grade/${attempt.id}`} className="btn btn-ghost btn-sm">
+                                                        Grade
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleReset(attempt)}
+                                                        disabled={resettingId === attempt.id}
+                                                        title="Clear this attempt so the student can retake the quiz"
+                                                        className="btn btn-ghost btn-sm text-danger disabled:opacity-50"
+                                                    >
+                                                        {resettingId === attempt.id ? 'Resetting…' : 'Reset'}
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
 

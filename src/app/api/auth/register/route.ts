@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
 import { getPlatformSettings, validateFieldFormat } from "@/lib/settings"
+import { validatePassword } from "@/lib/passwordPolicy"
 
 export async function POST(request: Request) {
     try {
@@ -83,11 +84,8 @@ export async function POST(request: Request) {
             }
         }
 
-        if (password.length < 8) return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 })
-        if (!/[a-z]/.test(password)) return NextResponse.json({ error: "Password must contain at least one lowercase letter" }, { status: 400 })
-        if (!/[A-Z]/.test(password)) return NextResponse.json({ error: "Password must contain at least one uppercase letter" }, { status: 400 })
-        if (!/[0-9]/.test(password)) return NextResponse.json({ error: "Password must contain at least one number" }, { status: 400 })
-        if (!/[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'/`~]/.test(password)) return NextResponse.json({ error: "Password must contain at least one special character" }, { status: 400 })
+        const passwordError = validatePassword(password)
+        if (passwordError) return NextResponse.json({ error: passwordError }, { status: 400 })
 
         const semesterNum = parseInt(semester)
         if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > settings.maxSemester) {

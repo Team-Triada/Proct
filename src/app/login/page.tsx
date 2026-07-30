@@ -210,6 +210,16 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
                     </div>
                 </div>
 
+                <div className="flex justify-end">
+                    <Link
+                        href="/forgot-password"
+                        className="font-mono text-[11px] transition-opacity hover:opacity-80"
+                        style={{ color: 'var(--text-muted)' }}
+                    >
+                        Forgot password?
+                    </Link>
+                </div>
+
                 {/* Error */}
                 <AnimatePresence>
                     {error && (

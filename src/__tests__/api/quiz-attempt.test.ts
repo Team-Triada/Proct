@@ -17,6 +17,7 @@ const mockAttemptUpdate = vi.fn()
 const mockQuestionFindUnique = vi.fn()
 const mockAnswerUpsert = vi.fn()
 const mockAnswerFindMany = vi.fn()
+const mockViolationCreate = vi.fn()
 
 vi.mock('@/lib/db', () => ({
     prisma: {
@@ -31,6 +32,9 @@ vi.mock('@/lib/db', () => ({
             upsert: mockAnswerUpsert,
             findMany: mockAnswerFindMany,
         },
+        violationLog: {
+            create: mockViolationCreate,
+        },
     },
 }))
 
@@ -42,8 +46,10 @@ const BASE_QUIZ = {
     id: 'q1',
     timePerQuestion: 30,
     totalQuestions: 2,
+    totalDuration: null,
     timingMode: 'PER_QUESTION',
     availableUntil: null,
+    showScore: true,
 }
 
 const BASE_ATTEMPT = {
@@ -54,7 +60,9 @@ const BASE_ATTEMPT = {
     currentQuestionStartTime: new Date(Date.now() - 5000).toISOString(), // 5s ago
     startedAt: new Date(Date.now() - 10000).toISOString(),
     timeSpent: 5,
+    totalPoints: 2,
     questionOrder: JSON.stringify(['q1_id', 'q2_id']),
+    shuffleMappings: JSON.stringify({ q1_id: [2, 1, 0] }),
     quiz: BASE_QUIZ,
 }
 
@@ -100,13 +108,53 @@ describe('Quiz Attempt Flow', () => {
     })
 
     describe('GET /api/attempts/[id] – Fetch current question', () => {
-        it('returns shuffled options and mapping', async () => {
+        it('returns options in the stored shuffle order without leaking the mapping', async () => {
             const res = await getQuestion(new Request('http://localhost'), buildParams('a1') as never)
             expect(res.status).toBe(200)
             const body = await res.json()
             expect(body.questionId).toBe('q1_id')
-            expect(body.options).toHaveLength(3)
-            expect(body.shuffleMapping).toHaveLength(3)
+            // Stored mapping is [2, 1, 0] over ['3', '4', '5']
+            expect(body.options).toEqual(['5', '4', '3'])
+            // The mapping stays server-side — it must not appear in the payload
+            expect(body.shuffleMapping).toBeUndefined()
+            // Nor may the answer key
+            expect(body.correctIndex).toBeUndefined()
+        })
+
+        it('reuses the stored mapping instead of reshuffling on every read', async () => {
+            const first = await getQuestion(new Request('http://localhost'), buildParams('a1') as never)
+            const second = await getQuestion(new Request('http://localhost'), buildParams('a1') as never)
+            expect((await first.json()).options).toEqual((await second.json()).options)
+            // A mapping already exists, so nothing should be persisted
+            expect(mockAttemptUpdate).not.toHaveBeenCalled()
+        })
+
+        it('generates and persists a mapping when none is stored yet', async () => {
+            mockAttemptFindUnique.mockResolvedValue({ ...BASE_ATTEMPT, shuffleMappings: '{}' })
+            const res = await getQuestion(new Request('http://localhost'), buildParams('a1') as never)
+            expect(res.status).toBe(200)
+            expect(mockAttemptUpdate).toHaveBeenCalledWith(expect.objectContaining({
+                data: expect.objectContaining({ shuffleMappings: expect.any(String) })
+            }))
+            const persisted = JSON.parse(mockAttemptUpdate.mock.calls[0][0].data.shuffleMappings)
+            expect([...persisted.q1_id].sort()).toEqual([0, 1, 2])
+        })
+
+        it('403 – refuses to serve a question ahead of the current index', async () => {
+            const res = await getQuestion(
+                new Request('http://localhost?index=1'),
+                buildParams('a1') as never
+            )
+            expect(res.status).toBe(403)
+        })
+
+        it('allows revisiting an earlier question', async () => {
+            mockAttemptFindUnique.mockResolvedValue({ ...BASE_ATTEMPT, currentIndex: 1 })
+            const res = await getQuestion(
+                new Request('http://localhost?index=0'),
+                buildParams('a1') as never
+            )
+            expect(res.status).toBe(200)
         })
 
         it('404 – attempt not found', async () => {
@@ -156,6 +204,32 @@ describe('Quiz Attempt Flow', () => {
                 where: { id: 'a1' },
                 data: expect.objectContaining({ currentIndex: 1 })
             }))
+        })
+
+        it('ignores a forged shuffleMapping in the request body', async () => {
+            // Stored mapping is [2, 1, 0] and correctIndex is 1. A client that
+            // claims the identity mapping while picking displayed position 0
+            // must still be graded against the stored order ('5' → index 2).
+            const req = buildPOSTRequest('http://localhost', {
+                ...SAVE_PAYLOAD,
+                selectedIndex: 0,
+                shuffleMapping: [1, 0, 2],
+            })
+            const res = await saveAnswer(req, buildParams('a1') as never)
+            expect(res.status).toBe(200)
+            expect(mockAnswerUpsert).toHaveBeenCalledWith(expect.objectContaining({
+                update: expect.objectContaining({ isCorrect: false, selectedIndex: 2 })
+            }))
+        })
+
+        it('400 – rejects a questionId outside this attempt', async () => {
+            const req = buildPOSTRequest('http://localhost', {
+                ...SAVE_PAYLOAD,
+                questionId: 'someone_elses_question',
+            })
+            const res = await saveAnswer(req, buildParams('a1') as never)
+            expect(res.status).toBe(400)
+            expect(mockAnswerUpsert).not.toHaveBeenCalled()
         })
 
         it('403 – time limit exceeded (PER_QUESTION)', async () => {

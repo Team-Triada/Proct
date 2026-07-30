@@ -21,8 +21,13 @@ model User {
   section      String?       // Batch number e.g. "1", "2" (displayed as "Batch 1")
   campusId     String?       // Numeric ID e.g. "29849", "30824"
   image        String?       // URL
+  // Brute-force throttling. Reset to 0 on any successful sign-in.
+  failedLoginAttempts Int          @default(0)
+  lockedUntil         DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  passwordResetTokens PasswordResetToken[]
 
   subjects     Subject[]     @relation("FacultySubjects")
   quizzes      Quiz[]        @relation("FacultyQuizzes")
@@ -90,12 +95,22 @@ model Question {
 model QuizAttempt {
   id                       String        @id @default(cuid())
   questionOrder            String
+  // JSON object of questionId -> number[] mapping displayed option position
+  // back to the question's original option index. Generated server-side the
+  // first time a question is served and reused on every later read, so the
+  // client never supplies the mapping used for grading.
+  shuffleMappings          String        @default("{}")
   currentIndex             Int           @default(0)
   status                   String        @default("IN_PROGRESS")
   score                    Float         @default(0)
   totalPoints              Int           @default(0)
   violationCount           Int           @default(0)
   reloadCount              Int           @default(0)
+  // Set when the attempt was submitted past its time budget. Answers arriving
+  // late are already rejected at the save path, so this records the fact for
+  // faculty rather than changing the score.
+  submittedLate            Boolean       @default(false)
+  overageSeconds           Int           @default(0)
   timeSpent                Int           @default(0) // Accumulated active seconds on current question/quiz
   startedAt                DateTime      @default(now())
   lastActivityAt           DateTime      @default(now())
@@ -139,6 +154,22 @@ model ViolationLog {
 
   attemptId   String
   attempt     QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  // SHA-256 of the token that was emailed. The plaintext token is never stored,
+  // so a database leak cannot be replayed to take over accounts.
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model PlatformSettings {

@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { Prisma } from '@prisma/client'
+import { parseShuffleMappings, toOriginalIndex } from '@/lib/shuffle'
+import { checkTiming } from '@/lib/attemptTiming'
 
 export async function POST(
     request: Request,
@@ -17,7 +19,10 @@ export async function POST(
     const { id } = await params
     const user = session.user
     const body = await request.json()
-    const { questionId, currentQuestionIndex, textAnswer, selectedIndices, selectedIndex, shuffleMapping } = body
+    // `shuffleMapping` is intentionally not read from the body — it is looked up
+    // from the attempt row so the client cannot choose how its answer maps back
+    // to the original option order.
+    const { questionId, currentQuestionIndex, textAnswer, selectedIndices, selectedIndex } = body
 
     // Verify Attempt exists and belongs to user
     const attempt = await prisma.quizAttempt.findUnique({
@@ -30,6 +35,7 @@ export async function POST(
             startedAt: true,
             timeSpent: true,
             questionOrder: true,
+            shuffleMappings: true,
             quiz: true // Fetch full quiz details for timing rules
         }
     })
@@ -46,18 +52,17 @@ export async function POST(
         return NextResponse.json({ error: 'Attempt is not in progress' }, { status: 400 })
     }
 
-    // TIMING ENFORCEMENT
     const now = new Date()
     const { quiz } = attempt
 
-    // 1. Availability Check (Global)
-    if (quiz.availableUntil && now > quiz.availableUntil) {
-        return NextResponse.json({ error: 'Quiz availability has ended' }, { status: 403 })
+    // The question must belong to this attempt's own question order. Without
+    // this an answer could be saved against any question id in the database,
+    // including questions from another faculty member's quiz.
+    const attemptQuestionOrder = JSON.parse(attempt.questionOrder) as string[]
+    if (typeof questionId !== 'string' || !attemptQuestionOrder.includes(questionId)) {
+        return NextResponse.json({ error: 'Question is not part of this attempt' }, { status: 400 })
     }
 
-    // 2. Mode-Specific Checks
-
-    // Fetch question type first to handle exemptions
     const question = await prisma.question.findUnique({
         where: { id: questionId },
         select: { type: true, correctIndex: true, correctIndices: true, points: true, options: true }
@@ -67,42 +72,22 @@ export async function POST(
         return NextResponse.json({ error: 'Question not found' }, { status: 404 })
     }
 
-    if (quiz.timingMode === 'PER_QUESTION') {
-        // Enforce Per-Question Timer ONLY for Objective Questions
-        if (question.type !== 'SHORT_ANSWER' && question.type !== 'LONG_ANSWER') {
-            const elapsed = Math.floor((now.getTime() - new Date(attempt.currentQuestionStartTime).getTime()) / 1000)
-            const limit = quiz.timePerQuestion
-            // Allow 10s grace for latency/network
-            if (elapsed > limit + 10) {
-                // Prompt says "Auto-advance on timeout", implying strictness.
-                if (elapsed > limit + 30) {
-                    return NextResponse.json({ error: 'Time limit exceeded for this question' }, { status: 403 })
-                }
-            }
-        }
-    } else if (quiz.timingMode === 'TOTAL_DURATION' && quiz.totalDuration) {
-        // Enforce Global Timer
-        const elapsedTotal = Math.floor((now.getTime() - new Date(attempt.startedAt).getTime()) / 1000)
-        const limitTotal = quiz.totalDuration * 60
-        if (elapsedTotal > limitTotal + 30) {
-            return NextResponse.json({ error: 'Total time limit exceeded' }, { status: 403 })
-        }
+    // TIMING ENFORCEMENT — measured entirely from server-written timestamps.
+    const verdict = checkTiming(quiz, attempt, question.type, now)
+    if (verdict.expired) {
+        return NextResponse.json(
+            { error: verdict.reason, overageSeconds: verdict.overageSeconds },
+            { status: 403 }
+        )
     }
 
-    // Validate shuffleMapping if present — must be a valid permutation of option indices
-    if (shuffleMapping !== undefined && shuffleMapping !== null) {
-        const optionCount = (JSON.parse(question.options) as unknown[]).length
-        const isValid =
-            Array.isArray(shuffleMapping) &&
-            shuffleMapping.length === optionCount &&
-            new Set(shuffleMapping).size === optionCount &&
-            (shuffleMapping as number[]).every(
-                (v: number) => Number.isInteger(v) && v >= 0 && v < optionCount
-            )
-        if (!isValid) {
-            return NextResponse.json({ error: 'Invalid shuffle mapping' }, { status: 400 })
-        }
+    let questionOptions: string[] = []
+    try {
+        questionOptions = JSON.parse(question.options || '[]') as string[]
+    } catch {
+        questionOptions = []
     }
+    const shuffleMapping = parseShuffleMappings(attempt.shuffleMappings)[questionId]
 
     // Auto-grading logic
     let isCorrect = false
@@ -112,9 +97,9 @@ export async function POST(
         // Checkbox: partial scoring
         const correctIndices = JSON.parse(question.correctIndices || '[]') as number[]
         if (selectedIndices && Array.isArray(selectedIndices)) {
-            const originalSelectedIndices = Array.isArray(shuffleMapping)
-                ? selectedIndices.map((idx: number) => shuffleMapping[idx])
-                : selectedIndices
+            const originalSelectedIndices = selectedIndices.map((idx: number) =>
+                toOriginalIndex(idx, shuffleMapping, questionOptions.length)
+            )
             const selectedSet = new Set(originalSelectedIndices)
             const correctSet = new Set(correctIndices)
 
@@ -142,9 +127,7 @@ export async function POST(
     } else {
         // Multiple Choice / Dropdown: full points if correct
         if (selectedIndex !== null && selectedIndex !== undefined) {
-            const originalSelectedIndex = Array.isArray(shuffleMapping)
-                ? shuffleMapping[selectedIndex]
-                : selectedIndex
+            const originalSelectedIndex = toOriginalIndex(selectedIndex, shuffleMapping, questionOptions.length)
             isCorrect = originalSelectedIndex === question.correctIndex
             pointsAwarded = isCorrect ? question.points : 0
         }
@@ -156,14 +139,16 @@ export async function POST(
         pointsAwarded,
         answeredAt: new Date(),
         selectedIndices: selectedIndices !== undefined
-            ? JSON.stringify(Array.isArray(shuffleMapping)
-                ? selectedIndices.map((idx: number) => shuffleMapping[idx])
-                : selectedIndices)
+            ? JSON.stringify(
+                (selectedIndices as number[]).map((idx: number) =>
+                    toOriginalIndex(idx, shuffleMapping, questionOptions.length)
+                )
+            )
             : undefined,
         textAnswer: textAnswer !== undefined ? textAnswer : undefined,
-        selectedIndex: selectedIndex !== undefined
-            ? (Array.isArray(shuffleMapping) ? shuffleMapping[selectedIndex] : selectedIndex)
-            : undefined,
+        selectedIndex: selectedIndex !== undefined && selectedIndex !== null
+            ? toOriginalIndex(selectedIndex, shuffleMapping, questionOptions.length)
+            : selectedIndex,
     }
 
     await prisma.answer.upsert({

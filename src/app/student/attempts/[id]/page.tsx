@@ -42,6 +42,14 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
     })
     const questionsMap = new Map(questions.map(q => [q.id, q]))
 
+    // Faculty-controlled result visibility. Both default to the restrictive
+    // reading: if the flag is off, the student sees neither the number nor
+    // anything it could be reconstructed from (per-question points, correct
+    // answers). Leaking the key here hands the answer sheet to everyone who
+    // has not attempted the quiz yet.
+    const showScore = attempt.quiz.showScore
+    const showAnswers = attempt.quiz.showAnswers
+
     const fullData = questionOrder.flatMap((qId, index) => {
         const question = questionsMap.get(qId)
         const answer = answersMap.get(qId)
@@ -63,12 +71,22 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
                         </p>
                     </div>
                     <div className="text-left sm:text-right w-full sm:w-auto p-4 rounded-xl bg-theme-surface border border-theme-subtle sm:border-none sm:bg-transparent sm:p-0">
-                        <div className="text-3xl font-bold text-accent">
-                            {attempt.score} <span className="text-lg text-theme-muted font-normal">/ {attempt.totalPoints}</span>
-                        </div>
-                        <div className={`badge ${attempt.score >= attempt.totalPoints * 0.6 ? 'badge-success' : 'badge-danger'} mt-2`}>
-                            {((attempt.score / attempt.totalPoints) * 100).toFixed(0)}% Score
-                        </div>
+                        {showScore ? (
+                            <>
+                                <div className="text-3xl font-bold text-accent">
+                                    {attempt.score} <span className="text-lg text-theme-muted font-normal">/ {attempt.totalPoints}</span>
+                                </div>
+                                <div className={`badge ${attempt.score >= attempt.totalPoints * 0.6 ? 'badge-success' : 'badge-danger'} mt-2`}>
+                                    {attempt.totalPoints > 0
+                                        ? `${((attempt.score / attempt.totalPoints) * 100).toFixed(0)}% Score`
+                                        : 'Not scored'}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-sm text-theme-muted">
+                                Score hidden by faculty
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -76,7 +94,7 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
                     <div key={item.question.id} className="card p-6">
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-lg font-medium">Question {item.questionNumber}</h3>
-                            <span className="badge badge-neutral">{item.question.points} pts</span>
+                            {showScore && <span className="badge badge-neutral">{item.question.points} pts</span>}
                         </div>
 
                         <p className="text-theme-primary mb-6 text-lg">{item.question.text}</p>
@@ -86,9 +104,11 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
                                 <p className="text-xs font-semibold text-theme-muted uppercase tracking-wider mb-2">Your Answer</p>
                                 <div className={`p-4 rounded-lg bg-theme-tertiary border ${item.answer?.pointsAwarded === null
                                     ? 'border-warning/30 bg-warning/5'
-                                    : item.answer?.isCorrect
-                                        ? 'border-success/30 bg-success/5'
-                                        : 'border-danger/30 bg-danger/5'
+                                    : !showScore
+                                        ? 'border-theme-subtle'
+                                        : item.answer?.isCorrect
+                                            ? 'border-success/30 bg-success/5'
+                                            : 'border-danger/30 bg-danger/5'
                                     }`}>
                                     {RenderAnswer(item.question, item.answer)}
                                 </div>
@@ -107,14 +127,16 @@ export default async function StudentAttemptResultPage({ params }: { params: Pro
                                         <span className="w-2 h-2 rounded-full bg-warning"></span>
                                         Submitted for Evaluation
                                     </span>
-                                ) : (
+                                ) : showScore ? (
                                     <span className={`text-sm font-medium ${(item.answer?.pointsAwarded && item.answer.pointsAwarded > 0) ? 'text-success' : 'text-danger'}`}>
                                         Awarded: {item.answer?.pointsAwarded ?? 0} / {item.question.points}
                                     </span>
+                                ) : (
+                                    <span className="text-sm font-medium text-theme-muted">Recorded</span>
                                 )}
                             </div>
 
-                            {item.answer && item.answer.pointsAwarded !== null && item.answer.pointsAwarded < item.question.points && (
+                            {showAnswers && item.answer && item.answer.pointsAwarded !== null && item.answer.pointsAwarded < item.question.points && (
                                 <div className="mt-4 pt-4 border-t border-theme-subtle">
                                     <p className="text-xs font-semibold text-success uppercase tracking-wider mb-2">Correct Answer</p>
                                     <div className="p-3 rounded-lg bg-success/10 border border-success/30 text-success">

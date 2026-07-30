@@ -8,9 +8,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockFindUnique = vi.fn()
 
+const mockUserUpdate = vi.fn()
+
 vi.mock('@/lib/db', () => ({
     prisma: {
-        user: { findUnique: mockFindUnique },
+        user: { findUnique: mockFindUnique, update: mockUserUpdate },
     },
 }))
 
@@ -31,6 +33,8 @@ const DB_USER = {
     name: 'Dr. Smith',
     role: 'FACULTY',
     rollNumber: null,
+    failedLoginAttempts: 0,
+    lockedUntil: null,
 }
 
 async function callAuthorize(credentials: Record<string, string> | undefined) {
@@ -110,6 +114,46 @@ describe('NextAuth credentials authorize', () => {
         mockFindUnique.mockResolvedValue(null)
         await callAuthorize({ email: 'test@yenepoya.edu.in', password: 'pass' })
         expect(mockFindUnique).toHaveBeenCalledWith({ where: { email: 'test@yenepoya.edu.in' } })
+    })
+
+    it('counts a failed attempt so repeated guesses lead to a lockout', async () => {
+        mockFindUnique.mockResolvedValue({ ...DB_USER, failedLoginAttempts: 2 })
+        bcryptCompare.mockResolvedValue(false)
+        await callAuthorize({ email: DB_USER.email, password: 'wrongpass' })
+        expect(mockUserUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            where: { id: 'u1' },
+            data: expect.objectContaining({ failedLoginAttempts: 3 }),
+        }))
+    })
+
+    it('locks the account once the failure threshold is reached', async () => {
+        mockFindUnique.mockResolvedValue({ ...DB_USER, failedLoginAttempts: 7 })
+        bcryptCompare.mockResolvedValue(false)
+        await callAuthorize({ email: DB_USER.email, password: 'wrongpass' })
+        const data = mockUserUpdate.mock.calls[0][0].data
+        expect(data.lockedUntil).toBeInstanceOf(Date)
+        expect(data.lockedUntil.getTime()).toBeGreaterThan(Date.now())
+    })
+
+    it('rejects a locked account without checking the password', async () => {
+        mockFindUnique.mockResolvedValue({
+            ...DB_USER,
+            lockedUntil: new Date(Date.now() + 10 * 60 * 1000),
+        })
+        bcryptCompare.mockResolvedValue(true)
+        const result = await callAuthorize({ email: DB_USER.email, password: 'CorrectPass1!' })
+        expect(result).toBeNull()
+        expect(bcryptCompare).not.toHaveBeenCalled()
+    })
+
+    it('clears the failure counter after a successful sign-in', async () => {
+        mockFindUnique.mockResolvedValue({ ...DB_USER, failedLoginAttempts: 3 })
+        bcryptCompare.mockResolvedValue(true)
+        const result = await callAuthorize({ email: DB_USER.email, password: 'CorrectPass1!' })
+        expect(result).not.toBeNull()
+        expect(mockUserUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            data: { failedLoginAttempts: 0, lockedUntil: null },
+        }))
     })
 })
 
