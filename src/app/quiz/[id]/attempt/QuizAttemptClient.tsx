@@ -14,8 +14,8 @@ interface QuestionData {
     questionId: string
     questionText: string
     options: string[]
-    shuffleMapping: number[]
     timePerQuestion: number
+    secondsElapsedOnQuestion: number
     enforcementMode: string
     violationCount: number
     type: QuestionType
@@ -25,7 +25,6 @@ interface AnswerState {
     selectedIndex?: number | null
     selectedIndices?: number[]
     textAnswer?: string
-    shuffleMapping?: number[]
 }
 
 interface SavedAnswer {
@@ -66,7 +65,7 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
     const [showWarning, setShowWarning] = useState(false)
     const [warningMessage, setWarningMessage] = useState('')
     const [completed, setCompleted] = useState(false)
-    const [result, setResult] = useState<{ score: number; totalPoints: number } | null>(null)
+    const [result, setResult] = useState<{ score: number | null; totalPoints: number | null } | null>(null)
     const [screenProtectionActive, setScreenProtectionActive] = useState(false)
     const [reloadWarning, setReloadWarning] = useState<string | null>(null)
     const [isFullscreen, setIsFullscreen] = useState(true)
@@ -195,7 +194,9 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                     if (data.type === 'SHORT_ANSWER' || data.type === 'LONG_ANSWER') {
                         setTimeLeft(null) // Unlimited
                     } else {
-                        setTimeLeft(data.timePerQuestion)
+                        // Start from the server's own measurement, so reloading
+                        // the page does not hand back a fresh full allowance.
+                        setTimeLeft(Math.max(0, data.timePerQuestion - (data.secondsElapsedOnQuestion ?? 0)))
                     }
                 } else if (timeLeft === null) {
                     // Fallback for others if lost
@@ -274,13 +275,15 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
         setSubmitting(true)
 
         // Save current answer
+        // Option order is resolved server-side from the attempt record; the
+        // client only reports which displayed position it picked.
         let answerData: AnswerState = {}
         if (question.type === 'CHECKBOX') {
-            answerData = { selectedIndices, shuffleMapping: question.shuffleMapping }
+            answerData = { selectedIndices }
         } else if (question.type.includes('ANSWER')) {
             answerData = { textAnswer }
         } else {
-            answerData = { selectedIndex, shuffleMapping: question.shuffleMapping }
+            answerData = { selectedIndex }
         }
 
         const hasNextQuestion = currentQuestionIndex < questionOrder.length - 1
@@ -459,8 +462,14 @@ export default function QuizAttemptClient({ quizId }: { quizId: string }) {
                     <p className="text-theme-muted text-sm mb-6">Your responses have been recorded</p>
 
                     <div className="p-6 rounded-xl bg-theme-tertiary mb-6">
-                        <p className="text-3xl font-bold text-accent">{result.score}</p>
-                        <p className="text-theme-muted text-sm">of {result.totalPoints} points</p>
+                        {result.score !== null ? (
+                            <>
+                                <p className="text-3xl font-bold text-accent">{result.score}</p>
+                                <p className="text-theme-muted text-sm">of {result.totalPoints} points</p>
+                            </>
+                        ) : (
+                            <p className="text-theme-muted text-sm">Your score will be released by your faculty</p>
+                        )}
                     </div>
 
                     <div className="space-y-3">

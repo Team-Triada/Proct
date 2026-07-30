@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import {
+    buildShuffleMapping,
+    parseShuffleMappings,
+    toOriginalIndex,
+    type ShuffleMapping,
+} from '@/lib/shuffle'
+import { checkTiming, elapsedOnQuestion } from '@/lib/attemptTiming'
 
 // Get current question
 export async function GET(
@@ -48,6 +55,18 @@ export async function GET(
         return NextResponse.json({ error: 'Index out of bounds' }, { status: 400 })
     }
 
+    // Forward lookahead is not allowed. Without this, a student can walk
+    // ?index=0..n immediately after starting and read the entire paper before
+    // answering anything, which defeats per-question timing entirely.
+    // Backward navigation stays open so the client's "Previous" button works
+    // for the modes that permit review.
+    if (targetIndex > attempt.currentIndex) {
+        return NextResponse.json(
+            { error: 'Cannot access a question ahead of your current position' },
+            { status: 403 }
+        )
+    }
+
     const currentQuestionId = questionOrder[targetIndex]
 
     const question = await prisma.question.findUnique({
@@ -58,19 +77,30 @@ export async function GET(
         return NextResponse.json({ error: 'Question not found' }, { status: 404 })
     }
 
-    // Parse and shuffle options while tracking correct answer
     let options: string[] = []
     try {
         options = JSON.parse(question.options || '[]') as string[]
     } catch {
         options = []
     }
-    // const correctOption = options[question.correctIndex] // Not sending correct answer to client
 
-    // Create shuffled options array with indices
-    const shuffledOptions = options
-        .map((opt: string, idx: number) => ({ text: opt, originalIndex: idx }))
-        .sort(() => Math.random() - 0.5)
+    // Option order is decided and stored server-side. It is generated once per
+    // question and reused on every later read, so a reload shows the student the
+    // same order it will be graded against, and the client never gets a say in
+    // how its answer maps back to the original options.
+    const storedMappings = parseShuffleMappings(attempt.shuffleMappings)
+    let mapping: ShuffleMapping | undefined = storedMappings[question.id]
+
+    if (options.length > 0 && (!mapping || mapping.length !== options.length)) {
+        mapping = buildShuffleMapping(options.length)
+        storedMappings[question.id] = mapping
+        await prisma.quizAttempt.update({
+            where: { id: attempt.id },
+            data: { shuffleMappings: JSON.stringify(storedMappings) },
+        })
+    }
+
+    const displayedOptions = mapping ? mapping.map(originalIndex => options[originalIndex]) : options
 
     return NextResponse.json({
         attemptId: attempt.id,
@@ -78,12 +108,14 @@ export async function GET(
         totalQuestions: questionOrder.length,
         questionId: question.id,
         questionText: question.text,
-        options: shuffledOptions.map((o: { text: string }) => o.text),
-        shuffleMapping: shuffledOptions.map((o: { originalIndex: number }) => o.originalIndex),
+        options: displayedOptions,
         timePerQuestion: attempt.quiz.timePerQuestion,
         enforcementMode: attempt.quiz.enforcementMode,
         violationCount: attempt.violationCount,
-        type: question.type // Added type
+        type: question.type,
+        // Server-measured remaining time for this question, so a client that
+        // reloads to reset its countdown gains nothing.
+        secondsElapsedOnQuestion: elapsedOnQuestion(attempt),
     })
 }
 
@@ -101,7 +133,10 @@ export async function POST(
     const user = session.user
     const { id } = await params
     const body = await request.json()
-    const { selectedIndex, selectedIndices, textAnswer, shuffleMapping, timeTaken } = body
+    // `shuffleMapping` and `timeTaken` are deliberately not read from the body:
+    // the mapping comes from the attempt row and the elapsed time is measured
+    // from the server's own `currentQuestionStartTime`.
+    const { selectedIndex, selectedIndices, textAnswer } = body
 
     const attempt = await prisma.quizAttempt.findUnique({
         where: { id },
@@ -127,6 +162,27 @@ export async function POST(
         return NextResponse.json({ error: 'Question not found' }, { status: 404 })
     }
 
+    // Server-authoritative timing: reject answers that arrive after the
+    // allowance for this question (or the whole attempt) has run out.
+    const now = new Date()
+    const verdict = checkTiming(attempt.quiz, attempt, question.type, now)
+    if (verdict.expired) {
+        return NextResponse.json(
+            { error: verdict.reason, overageSeconds: verdict.overageSeconds },
+            { status: 403 }
+        )
+    }
+
+    const timeTaken = elapsedOnQuestion(attempt, now)
+
+    let questionOptions: string[] = []
+    try {
+        questionOptions = JSON.parse(question.options || '[]') as string[]
+    } catch {
+        questionOptions = []
+    }
+    const shuffleMapping = parseShuffleMappings(attempt.shuffleMappings)[question.id]
+
     // Validating Answer
     let isCorrect = false
     let originalSelectedIndex: number | null = null
@@ -136,10 +192,9 @@ export async function POST(
     if (question.type === 'CHECKBOX') {
         const correctIndices = JSON.parse(question.correctIndices || '[]') as number[]
         if (selectedIndices && Array.isArray(selectedIndices)) {
-            // Map shuffled indices back to original if mapping exists
-            originalSelectedIndices = shuffleMapping
-                ? selectedIndices.map((i: number) => (shuffleMapping as number[])[i])
-                : selectedIndices
+            originalSelectedIndices = selectedIndices.map((i: number) =>
+                toOriginalIndex(i, shuffleMapping, questionOptions.length)
+            )
 
             // Correct logic: Intersection of selected and correct
             const selectedSet = new Set(originalSelectedIndices)
@@ -176,7 +231,10 @@ export async function POST(
         pointsAwarded = null // Null signifies "Pending Grading"
     } else {
         // Multiple Choice / Dropdown
-        originalSelectedIndex = shuffleMapping && selectedIndex !== null ? shuffleMapping[selectedIndex] : selectedIndex
+        originalSelectedIndex =
+            selectedIndex === null || selectedIndex === undefined
+                ? null
+                : toOriginalIndex(selectedIndex, shuffleMapping, questionOptions.length)
         isCorrect = originalSelectedIndex === question.correctIndex
         // Auto-grade: Full points if correct, 0 if wrong
         pointsAwarded = isCorrect ? question.points : 0
@@ -224,14 +282,11 @@ export async function POST(
         // Sum up points from all answers (treating null as 0 for now)
         // Manual grading will update the attempt score later
         let score = 0
-        answers.forEach((a: any) => {
+        answers.forEach(a => {
             if (a.pointsAwarded !== null) {
                 score += a.pointsAwarded
             }
         })
-
-        // Add current answer's points if not already in DB list (upsert might not have committed visibility yet if processed differently, but here we await upsert so it should be fine. actually let's just use the calculated score)
-        // Wait, `answers` fetched above WILL include the upserted one because we awaited upsert.
 
         await prisma.quizAttempt.update({
             where: { id },
@@ -244,16 +299,22 @@ export async function POST(
 
         return NextResponse.json({
             completed: true,
-            score,
-            totalPoints: attempt.totalPoints,
+            score: attempt.quiz.showScore ? score : null,
+            totalPoints: attempt.quiz.showScore ? attempt.totalPoints : null,
             showScore: attempt.quiz.showScore
         })
     }
 
-    // Move to next question
+    // Move to next question. The per-question clock has to restart here, or the
+    // next question inherits this question's start time and is already expired.
     await prisma.quizAttempt.update({
         where: { id },
-        data: { currentIndex: attempt.currentIndex + 1 }
+        data: {
+            currentIndex: attempt.currentIndex + 1,
+            currentQuestionStartTime: now,
+            lastActivityAt: now,
+            timeSpent: attempt.quiz.timingMode === 'PER_QUESTION' ? 0 : attempt.timeSpent + timeTaken,
+        }
     })
 
     return NextResponse.json({

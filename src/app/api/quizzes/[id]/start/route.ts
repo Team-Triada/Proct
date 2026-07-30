@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { matchesQuizTargeting } from '@/lib/quizFilters'
 import { getPlatformSettings } from '@/lib/settings'
+import { shuffle } from '@/lib/shuffle'
 
 export async function POST(
     request: Request,
@@ -152,9 +153,7 @@ export async function POST(
     }
 
     // Shuffle questions and select the required number
-    const shuffledQuestions = quiz.questions
-        .sort(() => Math.random() - 0.5)
-        .slice(0, quiz.totalQuestions)
+    const shuffledQuestions = shuffle(quiz.questions).slice(0, quiz.totalQuestions)
 
     const questionOrder = shuffledQuestions.map((q: { id: string }) => q.id)
     const totalPoints = shuffledQuestions.reduce((sum: number, q: { points: number }) => sum + q.points, 0)
