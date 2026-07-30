@@ -21,7 +21,7 @@ export async function PUT(
         const data: Record<string, unknown> = {}
         if (email) data.email = email
         if (password && password.trim() !== '') {
-            data.password = await bcrypt.hash(password, 10)
+            data.password = await bcrypt.hash(password, 12)
         }
         if (name) data.name = name
         if (role) data.role = role

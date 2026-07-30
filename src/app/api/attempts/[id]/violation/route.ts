@@ -3,6 +3,29 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
+// Must stay in sync with the logViolation() calls in src/hooks/useProctoringEngine.ts
+const ALLOWED_VIOLATION_TYPES = [
+    'APP_SWITCH',
+    'APP_SWITCH_IOS',
+    'BACK_NAVIGATION',
+    'COPY_ATTEMPT',
+    'COPY_PASTE_SHORTCUT',
+    'DEVTOOLS_ATTEMPT',
+    'DEVTOOLS_OPENED',
+    'FULLSCREEN_EXIT',
+    'MAC_SCREENSHOT',
+    'MULTI_TOUCH_GESTURE',
+    'PAGE_HIDE_IOS',
+    'PRINT_ATTEMPT',
+    'QUICK_BLUR_DETECTED',
+    'SCREENSHOT_ATTEMPT',
+    'SCREENSHOT_DETECTED',
+    'SCREEN_CAPTURE_DETECTED',
+    'SNIPPING_TOOL',
+    'TAB_SWITCH',
+    'WINDOW_RESIZE',
+]
+
 export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -17,6 +40,10 @@ export async function POST(
     const { id } = await params
     const body = await request.json()
     const { type, description } = body
+
+    if (!type || !ALLOWED_VIOLATION_TYPES.includes(type)) {
+        return NextResponse.json({ error: 'Invalid violation type' }, { status: 400 })
+    }
 
     const attempt = await prisma.quizAttempt.findUnique({
         where: { id }

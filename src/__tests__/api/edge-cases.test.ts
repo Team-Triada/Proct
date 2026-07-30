@@ -225,7 +225,7 @@ describe('Violation logging – edge cases', () => {
     it('violationCount incremented atomically', async () => {
         mockFindUnique.mockResolvedValue({ id: 'a1', studentId: 's1', status: 'IN_PROGRESS' })
         mockUpdate.mockResolvedValue({ violationCount: 5 })
-        const body = await (await logViolation(req({ type: 'DEVTOOLS' }), params({ id: 'a1' }))).json()
+        const body = await (await logViolation(req({ type: 'DEVTOOLS_OPENED' }), params({ id: 'a1' }))).json()
         expect(body.violationCount).toBe(5)
         expect(mockUpdate.mock.calls[0][0].data.violationCount).toEqual({ increment: 1 })
     })
