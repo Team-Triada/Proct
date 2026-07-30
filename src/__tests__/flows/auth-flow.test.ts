@@ -9,11 +9,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockFindUnique = vi.fn()
 const mockCreate = vi.fn()
 
+const mockUserUpdate = vi.fn()
+
 vi.mock('@/lib/db', () => ({
     prisma: {
         user: {
             findUnique: mockFindUnique,
             create: mockCreate,
+            update: mockUserUpdate,
         },
     },
 }))
@@ -122,6 +125,8 @@ describe('Auth flow: registration → login → role redirect', () => {
             name: 'Flow Student',
             role: 'STUDENT',
             rollNumber: '23BBCCED099',
+            failedLoginAttempts: 0,
+            lockedUntil: null,
         }
         mockFindUnique.mockResolvedValue(storedUser)
         mockBcryptCompare.mockResolvedValue(true)
@@ -166,6 +171,8 @@ describe('Auth flow: registration → login → role redirect', () => {
             name: 'Flow Student',
             role: 'STUDENT',
             rollNumber: '23BBCCED099',
+            failedLoginAttempts: 0,
+            lockedUntil: null,
         })
         mockBcryptCompare.mockResolvedValue(false) // wrong password
 
